@@ -12,23 +12,30 @@ const BLANK_RECIPE: ExtractedRecipe = {
   thumbnailUrl: null,
 }
 
-/** sourceUrl triggers AI extraction from a video/website; omit it for a blank manual-entry form. */
-export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
+interface Props {
+  /** Triggers AI extraction from a video/website URL. */
+  sourceUrl?: string
+  /** Edits an existing saved recipe instead of creating a new one. */
+  recipeId?: string
+}
+
+/** Omit both sourceUrl and recipeId for a blank manual-entry form. */
+export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
   const navigate = useNavigate()
-  const [extracting, setExtracting] = useState(!!sourceUrl)
+  const [extracting, setExtracting] = useState(!!sourceUrl || !!recipeId)
   const [error, setError] = useState<string | null>(null)
-  const [recipe, setRecipe] = useState<ExtractedRecipe | null>(sourceUrl ? null : BLANK_RECIPE)
+  const [recipe, setRecipe] = useState<ExtractedRecipe | null>(sourceUrl || recipeId ? null : BLANK_RECIPE)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState<string>('')
   const [newCategory, setNewCategory] = useState('')
   const [saving, setSaving] = useState(false)
-  const extractionStarted = useRef(false)
+  const startedRef = useRef(false)
 
   useEffect(() => {
     // Guards against React StrictMode's dev-only double-invoke, which would
-    // otherwise fire this paid extraction call twice per mount.
-    if (extractionStarted.current) return
-    extractionStarted.current = true
+    // otherwise fire a paid extraction call (or a duplicate fetch) twice per mount.
+    if (startedRef.current) return
+    startedRef.current = true
 
     supabase
       .from('categories')
@@ -37,6 +44,31 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
       .then(({ data }) => {
         const existing = data ?? []
         setCategories(existing)
+
+        if (recipeId) {
+          supabase
+            .from('recipes')
+            .select('*')
+            .eq('id', recipeId)
+            .single()
+            .then(({ data: existingRecipe, error: fetchError }) => {
+              if (fetchError || !existingRecipe) {
+                setError('Could not load that recipe.')
+                setExtracting(false)
+                return
+              }
+              setRecipe({
+                title: existingRecipe.title,
+                category: '',
+                ingredients: existingRecipe.ingredients,
+                steps: existingRecipe.steps,
+                thumbnailUrl: existingRecipe.thumbnail_url,
+              })
+              setCategoryId(existingRecipe.category_id ?? '')
+              setExtracting(false)
+            })
+          return
+        }
 
         if (!sourceUrl) return
 
@@ -57,7 +89,7 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
           .catch((err) => setError(err instanceof Error ? err.message : 'Extraction failed.'))
           .finally(() => setExtracting(false))
       })
-  }, [sourceUrl])
+  }, [sourceUrl, recipeId])
 
   function updateIngredient(index: number, patch: Partial<Ingredient>) {
     if (!recipe) return
@@ -103,6 +135,22 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
       const ingredients = recipe.ingredients.filter((ing) => ing.item.trim() || ing.quantity != null)
       const steps = recipe.steps.map((s) => s.trim()).filter(Boolean)
 
+      if (recipeId) {
+        const { error } = await supabase
+          .from('recipes')
+          .update({
+            category_id: finalCategoryId,
+            title: recipe.title,
+            thumbnail_url: recipe.thumbnailUrl,
+            ingredients,
+            steps,
+          })
+          .eq('id', recipeId)
+        if (error) throw error
+        navigate(`/recipes/${recipeId}`)
+        return
+      }
+
       const { error } = await supabase.from('recipes').insert({
         user_id: user.id,
         category_id: finalCategoryId,
@@ -125,7 +173,7 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-neutral-500">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-600 border-t-transparent" />
-        <p>Reading the recipe and writing it up…</p>
+        <p>{recipeId ? 'Loading recipe…' : 'Reading the recipe and writing it up…'}</p>
       </div>
     )
   }
@@ -134,10 +182,12 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
     return (
       <div className="mx-auto max-w-md p-6 text-center">
         <p className="mb-4 text-red-600">{error}</p>
-        <p className="text-sm text-neutral-500">
-          This can happen if a video has no captions/transcript, or a website blocks automated
-          requests, so there's nothing to turn into a recipe.
-        </p>
+        {!recipeId && (
+          <p className="text-sm text-neutral-500">
+            This can happen if a video has no captions/transcript, or a website blocks automated
+            requests, so there's nothing to turn into a recipe.
+          </p>
+        )}
         <button
           onClick={() => navigate('/')}
           className="mt-6 rounded-lg border border-neutral-300 px-4 py-2"
@@ -152,7 +202,10 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
 
   return (
     <div className="mx-auto max-w-md p-4">
-      <button onClick={() => navigate('/')} className="mb-3 text-sm text-neutral-500 underline">
+      <button
+        onClick={() => navigate(recipeId ? `/recipes/${recipeId}` : '/')}
+        className="mb-3 text-sm text-neutral-500 underline"
+      >
         ← Cancel
       </button>
 
@@ -258,7 +311,7 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
         disabled={saving}
         className="w-full rounded-lg bg-orange-600 px-4 py-3 font-medium text-white disabled:opacity-50"
       >
-        {saving ? 'Saving…' : 'Save recipe'}
+        {saving ? 'Saving…' : recipeId ? 'Save changes' : 'Save recipe'}
       </button>
     </div>
   )

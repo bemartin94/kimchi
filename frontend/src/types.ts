@@ -24,6 +24,17 @@ export interface Recipe {
   ingredients: Ingredient[]
   steps: string[]
   raw_transcript: string | null
+  share_token: string | null
+  created_at: string
+}
+
+export interface SharedRecipe {
+  id: string
+  title: string
+  thumbnail_url: string | null
+  source_url: string | null
+  ingredients: Ingredient[]
+  steps: string[]
   created_at: string
 }
 

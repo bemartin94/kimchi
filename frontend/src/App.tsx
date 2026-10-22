@@ -3,6 +3,8 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './lib/AuthContext'
 import { AddRecipe } from './routes/AddRecipe'
 import { Auth } from './routes/Auth'
+import { EditRecipe } from './routes/EditRecipe'
+import { PublicRecipe } from './routes/PublicRecipe'
 import { RecipeDetail } from './routes/RecipeDetail'
 import { RecipeList } from './routes/RecipeList'
 import { ShareTarget } from './routes/ShareTarget'
@@ -13,6 +15,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/r/:token" element={<PublicRecipe />} />
           <Route
             path="/"
             element={
@@ -42,6 +45,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <RecipeDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recipes/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditRecipe />
               </ProtectedRoute>
             }
           />

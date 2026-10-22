@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
@@ -17,16 +17,8 @@ function isYouTubeUrl(url: string): boolean {
   }
 }
 
-function buildShareText(recipe: Recipe, scale: number): string {
-  const lines = [recipe.title, '']
-  lines.push('Ingredients:')
-  for (const ing of recipe.ingredients) {
-    lines.push(`- ${typeof ing === 'string' ? ing : formatIngredient(ing, scale)}`)
-  }
-  lines.push('', 'Steps:')
-  recipe.steps.forEach((step, i) => lines.push(`${i + 1}. ${step}`))
-  if (recipe.source_url) lines.push('', `Original recipe: ${recipe.source_url}`)
-  return lines.join('\n')
+function publicUrlFor(token: string): string {
+  return `${window.location.origin}/r/${token}`
 }
 
 export function RecipeDetail() {
@@ -54,24 +46,40 @@ export function RecipeDetail() {
   // Don't leave the screen pinned on if the user navigates away mid-cook.
   useEffect(() => () => wakeLock.disable(), []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function getOrCreateShareToken(): Promise<string> {
+    if (recipe?.share_token) return recipe.share_token
+    const token = crypto.randomUUID()
+    const { error } = await supabase.from('recipes').update({ share_token: token }).eq('id', id)
+    if (error) throw error
+    setRecipe((r) => (r ? { ...r, share_token: token } : r))
+    return token
+  }
+
   async function handleShare() {
     if (!recipe) return
-    const text = buildShareText(recipe, scale)
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: recipe.title, text })
-      } catch {
-        // user cancelled the share sheet — nothing to do
-      }
-      return
-    }
     try {
-      await navigator.clipboard.writeText(text)
-      setShareFeedback('Copied to clipboard!')
-      setTimeout(() => setShareFeedback(null), 2000)
-    } catch {
-      setShareFeedback("Couldn't copy — select and copy the text manually.")
+      const token = await getOrCreateShareToken()
+      const url = publicUrlFor(token)
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: recipe.title, text: recipe.title, url })
+        } catch {
+          // user cancelled the share sheet — nothing to do
+        }
+        return
+      }
+      await navigator.clipboard.writeText(url)
+      setShareFeedback('Public link copied to clipboard!')
+      setTimeout(() => setShareFeedback(null), 2500)
+    } catch (err) {
+      setShareFeedback(err instanceof Error ? err.message : 'Could not create a share link.')
     }
+  }
+
+  async function handleStopSharing() {
+    if (!recipe) return
+    const { error } = await supabase.from('recipes').update({ share_token: null }).eq('id', id)
+    if (!error) setRecipe((r) => (r ? { ...r, share_token: null } : r))
   }
 
   async function handleDelete() {
@@ -113,6 +121,14 @@ export function RecipeDetail() {
           </button>
         </div>
         {shareFeedback && <p className="mb-2 text-xs text-green-700">{shareFeedback}</p>}
+        {recipe.share_token && (
+          <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500">
+            <span className="truncate">{publicUrlFor(recipe.share_token)}</span>
+            <button onClick={handleStopSharing} className="shrink-0 text-red-600 underline">
+              Stop sharing
+            </button>
+          </div>
+        )}
         {recipe.source_url && (
           <a
             href={recipe.source_url}
@@ -202,9 +218,14 @@ export function RecipeDetail() {
           ))}
         </ol>
 
-        <button onClick={handleDelete} className="text-sm text-red-600 underline">
-          Delete recipe
-        </button>
+        <div className="flex gap-4">
+          <Link to={`/recipes/${recipe.id}/edit`} className="text-sm text-orange-600 underline">
+            Edit recipe
+          </Link>
+          <button onClick={handleDelete} className="text-sm text-red-600 underline">
+            Delete recipe
+          </button>
+        </div>
       </div>
     </Layout>
   )
