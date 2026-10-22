@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Layout } from '../components/Layout'
+import { downloadCsv, toCsv } from '../lib/csv'
+import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
-import type { Profile as ProfileType } from '../types'
+import { tagsOf } from '../lib/tags'
+import type { Profile as ProfileType, Recipe } from '../types'
 
 export function Profile() {
+  const navigate = useNavigate()
   const [profile, setProfile] = useState<ProfileType | null>(null)
+  const [recipeCount, setRecipeCount] = useState(0)
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -20,11 +26,15 @@ export function Profile() {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) return
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const [{ data }, { count }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    ])
     if (data) {
       setProfile(data)
       setDisplayName(data.display_name ?? '')
     }
+    setRecipeCount(count ?? 0)
     setLoading(false)
   }
 
@@ -61,6 +71,35 @@ export function Profile() {
     setTimeout(() => setShareFeedback(null), 2500)
   }
 
+  async function handleExportCsv() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: recipes } = await supabase
+      .from('recipes')
+      .select('*, recipe_tags(tags(*))')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+    const rows = (recipes ?? []).map((r: Recipe) => [
+      r.title,
+      tagsOf(r)
+        .map((t) => t.name)
+        .join('; '),
+      r.ingredients.map((ing) => (typeof ing === 'string' ? ing : formatIngredient(ing))).join('\n'),
+      r.steps.map((s, i) => `${i + 1}. ${s}`).join('\n'),
+      r.source_url ?? '',
+      r.created_at,
+    ])
+    const csv = toCsv(['Title', 'Tags', 'Ingredients', 'Steps', 'Source URL', 'Saved at'], rows)
+    downloadCsv('recetario-recipes.csv', csv)
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    navigate('/auth')
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -80,7 +119,15 @@ export function Profile() {
   return (
     <Layout>
       <div className="mx-auto max-w-md p-4">
-        <h1 className="mb-4 text-xl font-semibold text-ink">Your profile</h1>
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-pill text-2xl text-pill-ink">
+            {(profile.display_name || 'Y')[0].toUpperCase()}
+          </div>
+          <p className="text-lg font-semibold text-ink">{profile.display_name || 'Your profile'}</p>
+          <p className="text-sm text-muted">
+            {recipeCount} {recipeCount === 1 ? 'recipe' : 'recipes'}
+          </p>
+        </div>
 
         <label className="mb-1 block text-sm font-medium text-ink">Display name</label>
         <div className="mb-4 flex gap-2">
@@ -121,21 +168,26 @@ export function Profile() {
         </div>
         {savedFeedback && <p className="mb-4 text-xs text-success-ink">Saved!</p>}
 
-        <div className="rounded-lg border border-line bg-card px-3 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-ink">Share your profile</p>
-              <p className="max-w-[220px] text-xs text-muted">
-                Send this link directly to someone to show them your recipes.
-                {!profile.is_public && ' (Only works once your profile is set to Public above.)'}
-              </p>
-            </div>
-            <button onClick={handleShareProfile} className="shrink-0 rounded-full bg-pill px-3 py-1 text-sm text-pill-ink">
-              Share
-            </button>
-          </div>
-          {shareFeedback && <p className="mt-2 text-xs text-success-ink">{shareFeedback}</p>}
-        </div>
+        <button
+          onClick={handleShareProfile}
+          className="mb-2 w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-white hover:bg-primary-hover"
+        >
+          Share profile
+        </button>
+        <button
+          onClick={handleExportCsv}
+          className="mb-6 w-full rounded-lg bg-pill px-4 py-3 text-sm font-medium text-pill-ink"
+        >
+          Export CSV
+        </button>
+        {shareFeedback && <p className="mb-4 -mt-4 text-center text-xs text-success-ink">{shareFeedback}</p>}
+
+        <button
+          onClick={handleSignOut}
+          className="block w-full text-center text-sm text-muted underline"
+        >
+          Sign out
+        </button>
       </div>
     </Layout>
   )

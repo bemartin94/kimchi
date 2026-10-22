@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Layout } from '../components/Layout'
-import { downloadCsv, toCsv } from '../lib/csv'
-import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
 import { tagsOf } from '../lib/tags'
 import type { Recipe } from '../types'
@@ -57,54 +55,36 @@ export function RecipeList() {
     )
   })
 
-  function handleExport() {
-    const rows = recipes.map((r) => [
-      r.title,
-      tagsOf(r)
-        .map((t) => t.name)
-        .join('; '),
-      r.ingredients.map((ing) => (typeof ing === 'string' ? ing : formatIngredient(ing))).join('\n'),
-      r.steps.map((s, i) => `${i + 1}. ${s}`).join('\n'),
-      r.source_url ?? '',
-      r.created_at,
-    ])
-    const csv = toCsv(['Title', 'Tags', 'Ingredients', 'Steps', 'Source URL', 'Saved at'], rows)
-    downloadCsv('recetario-recipes.csv', csv)
-  }
-
   return (
     <Layout>
-      <div className="mx-auto max-w-2xl p-4 pb-24">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="mx-auto max-w-2xl p-4 pb-28">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h1 className="text-xl font-semibold text-ink">My recipes</h1>
+          <span className="text-sm text-muted">
+            {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
+          </span>
+        </div>
+
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setActiveTag('all')}
+            className={`shrink-0 rounded-full px-3 py-1 text-sm ${
+              activeTag === 'all' ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
+            }`}
+          >
+            All
+          </button>
+          {allTags.map((t) => (
             <button
-              onClick={() => setActiveTag('all')}
+              key={t.id}
+              onClick={() => setActiveTag(t.id)}
               className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                activeTag === 'all' ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
+                activeTag === t.id ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
               }`}
             >
-              All
+              {t.name}
             </button>
-            {allTags.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setActiveTag(t.id)}
-                className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                  activeTag === t.id ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
-                }`}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-          {recipes.length > 0 && (
-            <button
-              onClick={handleExport}
-              className="shrink-0 whitespace-nowrap text-sm text-muted underline"
-            >
-              Export CSV
-            </button>
-          )}
+          ))}
         </div>
 
         {loading && <p className="text-muted">Loading…</p>}
@@ -142,13 +122,22 @@ export function RecipeList() {
                   🍽️
                 </div>
               )}
-              <p className="p-2 text-sm font-medium text-ink">{r.title}</p>
+              <div className="p-2">
+                <p className="text-sm font-medium text-ink">{r.title}</p>
+                {tagsOf(r).length > 0 && (
+                  <p className="mt-0.5 truncate text-xs text-muted">
+                    {tagsOf(r)
+                      .map((t) => t.name)
+                      .join(' · ')}
+                  </p>
+                )}
+              </div>
             </Link>
           ))}
         </div>
       </div>
 
-      <div className="fixed bottom-4 left-1/2 w-[calc(100%-2rem)] max-w-md -translate-x-1/2">
+      <div className="fixed bottom-20 left-1/2 w-[calc(100%-2rem)] max-w-md -translate-x-1/2">
         <input
           type="search"
           value={search}

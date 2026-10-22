@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { extractRecipe } from '../lib/api'
 import { supabase } from '../lib/supabaseClient'
@@ -26,6 +26,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
   const [extracting, setExtracting] = useState(!!sourceUrl || !!recipeId)
   const [error, setError] = useState<string | null>(null)
   const [recipe, setRecipe] = useState<ExtractedRecipe | null>(sourceUrl || recipeId ? null : BLANK_RECIPE)
+  const [existingTags, setExistingTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
   const startedRef = useRef(false)
@@ -49,6 +50,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         .order('name')
         .then(({ data }) => {
           const existingTagNames = (data ?? []).map((t) => t.name)
+          setExistingTags(existingTagNames)
 
           if (recipeId) {
             supabase
@@ -105,15 +107,21 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
     if (!recipe) return
     const name = tagInput.trim()
     if (!name) return
-    if (!recipe.tags.some((t) => t.toLowerCase() === name.toLowerCase())) {
-      setRecipe({ ...recipe, tags: [...recipe.tags, name] })
+    const canonical = existingTags.find((t) => t.toLowerCase() === name.toLowerCase()) ?? name
+    setExistingTags((prev) => (prev.some((t) => t.toLowerCase() === canonical.toLowerCase()) ? prev : [...prev, canonical]))
+    if (!recipe.tags.some((t) => t.toLowerCase() === canonical.toLowerCase())) {
+      setRecipe({ ...recipe, tags: [...recipe.tags, canonical] })
     }
     setTagInput('')
   }
 
-  function removeTag(name: string) {
+  function toggleTag(name: string) {
     if (!recipe) return
-    setRecipe({ ...recipe, tags: recipe.tags.filter((t) => t !== name) })
+    const has = recipe.tags.some((t) => t.toLowerCase() === name.toLowerCase())
+    setRecipe({
+      ...recipe,
+      tags: has ? recipe.tags.filter((t) => t.toLowerCase() !== name.toLowerCase()) : [...recipe.tags, name],
+    })
   }
 
   async function handleSave() {
@@ -170,6 +178,13 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
       setSaving(false)
     }
   }
+
+  const allTagOptions = useMemo(() => {
+    const byLower = new Map<string, string>()
+    for (const t of existingTags) byLower.set(t.toLowerCase(), t)
+    for (const t of recipe?.tags ?? []) if (!byLower.has(t.toLowerCase())) byLower.set(t.toLowerCase(), t)
+    return [...byLower.values()]
+  }, [existingTags, recipe?.tags])
 
   if (extracting) {
     return (
@@ -281,28 +296,39 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
       <h2 className="mb-1 font-semibold text-ink">Tags</h2>
       {sourceUrl && <p className="mb-1 text-xs text-muted">3 tags suggested automatically — edit as you like.</p>}
       <div className="mb-2 flex flex-wrap gap-1.5">
-        {recipe.tags.map((tag) => (
-          <span key={tag} className="flex items-center gap-1 rounded-full bg-pill px-3 py-1 text-sm text-pill-ink">
-            {tag}
-            <button onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`} className="text-muted">
-              ✕
+        {allTagOptions.map((tag) => {
+          const on = recipe.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
+          return (
+            <button
+              key={tag}
+              onClick={() => toggleTag(tag)}
+              className={`rounded-full px-3 py-1 text-sm ${on ? 'bg-primary text-white' : 'bg-pill text-pill-ink'}`}
+            >
+              {tag}
             </button>
-          </span>
-        ))}
+          )
+        })}
       </div>
-      <input
-        className="mb-4 w-full rounded-lg border border-line bg-card px-3 py-2 text-ink"
-        placeholder="Add a tag and press Enter"
-        value={tagInput}
-        onChange={(e) => setTagInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault()
-            addTag()
-          }
-        }}
-        onBlur={addTag}
-      />
+      <div className="mb-4 flex gap-1.5">
+        <input
+          className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2 text-ink"
+          placeholder="New tag"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault()
+              addTag()
+            }
+          }}
+        />
+        <button
+          onClick={addTag}
+          className="shrink-0 whitespace-nowrap rounded-lg border border-line px-3 text-sm font-medium text-primary-ink"
+        >
+          + Tag
+        </button>
+      </div>
 
       {error && <p className="mb-3 text-sm text-destructive-ink">{error}</p>}
 

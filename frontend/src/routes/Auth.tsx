@@ -71,9 +71,38 @@ export function Auth() {
     if (error) setError(error.message)
   }
 
+  function switchMode(next: 'sign-in' | 'sign-up') {
+    setMode(next)
+    setConfirmPassword('')
+    setError(null)
+    setInfo(null)
+  }
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
       <h1 className="mb-6 text-center text-2xl font-semibold text-ink">Recetario</h1>
+
+      <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-pill p-1">
+        <button
+          type="button"
+          onClick={() => switchMode('sign-in')}
+          className={`rounded-lg py-2 text-sm font-semibold ${
+            mode === 'sign-in' ? 'bg-card text-ink' : 'text-muted'
+          }`}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode('sign-up')}
+          className={`rounded-lg py-2 text-sm font-semibold ${
+            mode === 'sign-up' ? 'bg-card text-ink' : 'text-muted'
+          }`}
+        >
+          Sign up
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="email"
@@ -106,7 +135,7 @@ export function Auth() {
           disabled={submitting}
           className="rounded-lg bg-primary px-3 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
         >
-          {mode === 'sign-in' ? 'Sign in' : 'Sign up'}
+          {mode === 'sign-in' ? 'Sign in' : 'Create account'}
         </button>
       </form>
 
@@ -115,7 +144,7 @@ export function Auth() {
           type="button"
           onClick={handleForgotPassword}
           disabled={submitting}
-          className="mt-2 text-center text-sm text-primary-ink underline"
+          className="mt-2 self-end text-sm text-primary-ink underline"
         >
           Forgot password?
         </button>
@@ -151,19 +180,6 @@ export function Auth() {
           />
         </svg>
         Continue with Google
-      </button>
-
-      <button
-        type="button"
-        onClick={() => {
-          setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')
-          setConfirmPassword('')
-          setError(null)
-          setInfo(null)
-        }}
-        className="mt-4 text-sm text-muted underline"
-      >
-        {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
       </button>
     </div>
   )
