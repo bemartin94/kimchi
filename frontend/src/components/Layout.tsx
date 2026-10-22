@@ -20,9 +20,6 @@ export function Layout({ children }: { children: ReactNode }) {
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <Link to="/browse" className="text-sm text-neutral-600 underline dark:text-neutral-300">
-            Browse
-          </Link>
           <Link to="/profile" className="text-sm text-neutral-600 underline dark:text-neutral-300">
             Profile
           </Link>

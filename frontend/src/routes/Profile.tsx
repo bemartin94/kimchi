@@ -130,7 +130,7 @@ export function Profile() {
             <div>
               <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Share your profile</p>
               <p className="max-w-[220px] text-xs text-neutral-500 dark:text-neutral-400">
-                Send this link directly to someone — they don't need to find you via Browse.
+                Send this link directly to someone to show them your recipes.
                 {!profile.is_public && ' (Only works once your profile is set to Public above.)'}
               </p>
             </div>
