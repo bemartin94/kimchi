@@ -18,9 +18,23 @@ export function RecipeList() {
 
   async function load() {
     setLoading(true)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+    // Recipes/categories SELECT is no longer owner-only at the RLS level (a
+    // public profile's rows are also readable, for the Browse feature), so
+    // "my recipes" now has to filter explicitly rather than relying on RLS.
     const [{ data: recipeData }, { data: categoryData }] = await Promise.all([
-      supabase.from('recipes').select('*').order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').order('name'),
+      supabase
+        .from('recipes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
     ])
     setRecipes(recipeData ?? [])
     setCategories(categoryData ?? [])

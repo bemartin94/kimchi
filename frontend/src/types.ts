@@ -1,3 +1,10 @@
+export interface Profile {
+  id: string
+  display_name: string | null
+  is_public: boolean
+  created_at: string
+}
+
 export interface Category {
   id: string
   user_id: string

@@ -3,11 +3,14 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthProvider } from './lib/AuthContext'
 import { AddRecipe } from './routes/AddRecipe'
 import { Auth } from './routes/Auth'
+import { Browse } from './routes/Browse'
 import { EditRecipe } from './routes/EditRecipe'
+import { Profile } from './routes/Profile'
 import { PublicRecipe } from './routes/PublicRecipe'
 import { RecipeDetail } from './routes/RecipeDetail'
 import { RecipeList } from './routes/RecipeList'
 import { ShareTarget } from './routes/ShareTarget'
+import { UserRecipes } from './routes/UserRecipes'
 
 function App() {
   return (
@@ -53,6 +56,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <EditRecipe />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/browse"
+            element={
+              <ProtectedRoute>
+                <Browse />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/:id"
+            element={
+              <ProtectedRoute>
+                <UserRecipes />
               </ProtectedRoute>
             }
           />

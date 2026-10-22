@@ -10,6 +10,12 @@ export function Layout({ children }: { children: ReactNode }) {
           Recetario
         </Link>
         <div className="flex items-center gap-3">
+          <Link to="/browse" className="text-sm text-neutral-600 underline">
+            Browse
+          </Link>
+          <Link to="/profile" className="text-sm text-neutral-600 underline">
+            Profile
+          </Link>
           <Link to="/add" className="rounded-lg bg-orange-600 px-3 py-1.5 text-sm font-medium text-white">
             + Add
           </Link>

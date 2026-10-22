@@ -29,18 +29,18 @@ export function RecipeDetail() {
   const [scale, setScale] = useState(1)
   const [customScale, setCustomScale] = useState('')
   const [shareFeedback, setShareFeedback] = useState<string | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
   const wakeLock = useWakeLock()
 
   useEffect(() => {
-    supabase
-      .from('recipes')
-      .select('*')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => {
-        setRecipe(data)
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('recipes').select('*').eq('id', id).single(),
+    ]).then(([{ data: userData }, { data: recipeData }]) => {
+      setRecipe(recipeData)
+      setIsOwner(!!userData.user && recipeData?.user_id === userData.user.id)
+      setLoading(false)
+    })
   }, [id])
 
   // Don't leave the screen pinned on if the user navigates away mid-cook.
@@ -113,15 +113,17 @@ export function RecipeDetail() {
         )}
         <div className="mb-1 flex items-start justify-between gap-2">
           <h1 className="text-xl font-semibold text-neutral-900">{recipe.title}</h1>
-          <button
-            onClick={handleShare}
-            className="shrink-0 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700"
-          >
-            Share
-          </button>
+          {isOwner && (
+            <button
+              onClick={handleShare}
+              className="shrink-0 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700"
+            >
+              Share
+            </button>
+          )}
         </div>
         {shareFeedback && <p className="mb-2 text-xs text-green-700">{shareFeedback}</p>}
-        {recipe.share_token && (
+        {isOwner && recipe.share_token && (
           <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500">
             <span className="truncate">{publicUrlFor(recipe.share_token)}</span>
             <button onClick={handleStopSharing} className="shrink-0 text-red-600 underline">
@@ -218,14 +220,16 @@ export function RecipeDetail() {
           ))}
         </ol>
 
-        <div className="flex gap-4">
-          <Link to={`/recipes/${recipe.id}/edit`} className="text-sm text-orange-600 underline">
-            Edit recipe
-          </Link>
-          <button onClick={handleDelete} className="text-sm text-red-600 underline">
-            Delete recipe
-          </button>
-        </div>
+        {isOwner && (
+          <div className="flex gap-4">
+            <Link to={`/recipes/${recipe.id}/edit`} className="text-sm text-orange-600 underline">
+              Edit recipe
+            </Link>
+            <button onClick={handleDelete} className="text-sm text-red-600 underline">
+              Delete recipe
+            </button>
+          </div>
+        )}
       </div>
     </Layout>
   )

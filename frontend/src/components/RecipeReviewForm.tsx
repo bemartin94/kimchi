@@ -37,58 +37,67 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
     if (startedRef.current) return
     startedRef.current = true
 
-    supabase
-      .from('categories')
-      .select('*')
-      .order('name')
-      .then(({ data }) => {
-        const existing = data ?? []
-        setCategories(existing)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
 
-        if (recipeId) {
-          supabase
-            .from('recipes')
-            .select('*')
-            .eq('id', recipeId)
-            .single()
-            .then(({ data: existingRecipe, error: fetchError }) => {
-              if (fetchError || !existingRecipe) {
-                setError('Could not load that recipe.')
+      // Categories SELECT is no longer owner-only at the RLS level (a public
+      // profile's rows are also readable, for Browse), so "my categories" for
+      // the picker/AI-hint has to filter explicitly.
+      supabase
+        .from('categories')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name')
+        .then(({ data }) => {
+          const existing = data ?? []
+          setCategories(existing)
+
+          if (recipeId) {
+            supabase
+              .from('recipes')
+              .select('*')
+              .eq('id', recipeId)
+              .eq('user_id', user.id)
+              .single()
+              .then(({ data: existingRecipe, error: fetchError }) => {
+                if (fetchError || !existingRecipe) {
+                  setError('Could not load that recipe.')
+                  setExtracting(false)
+                  return
+                }
+                setRecipe({
+                  title: existingRecipe.title,
+                  category: '',
+                  ingredients: existingRecipe.ingredients,
+                  steps: existingRecipe.steps,
+                  thumbnailUrl: existingRecipe.thumbnail_url,
+                })
+                setCategoryId(existingRecipe.category_id ?? '')
                 setExtracting(false)
-                return
-              }
-              setRecipe({
-                title: existingRecipe.title,
-                category: '',
-                ingredients: existingRecipe.ingredients,
-                steps: existingRecipe.steps,
-                thumbnailUrl: existingRecipe.thumbnail_url,
               })
-              setCategoryId(existingRecipe.category_id ?? '')
-              setExtracting(false)
+            return
+          }
+
+          if (!sourceUrl) return
+
+          extractRecipe(
+            sourceUrl,
+            existing.map((c) => c.name),
+          )
+            .then((result) => {
+              setRecipe(result)
+              const match = existing.find((c) => c.name.toLowerCase() === result.category.toLowerCase())
+              if (match) {
+                setCategoryId(match.id)
+              } else {
+                setCategoryId('')
+                setNewCategory(result.category)
+              }
             })
-          return
-        }
-
-        if (!sourceUrl) return
-
-        extractRecipe(
-          sourceUrl,
-          existing.map((c) => c.name),
-        )
-          .then((result) => {
-            setRecipe(result)
-            const match = existing.find((c) => c.name.toLowerCase() === result.category.toLowerCase())
-            if (match) {
-              setCategoryId(match.id)
-            } else {
-              setCategoryId('')
-              setNewCategory(result.category)
-            }
-          })
-          .catch((err) => setError(err instanceof Error ? err.message : 'Extraction failed.'))
-          .finally(() => setExtracting(false))
-      })
+            .catch((err) => setError(err instanceof Error ? err.message : 'Extraction failed.'))
+            .finally(() => setExtracting(false))
+        })
+    })
   }, [sourceUrl, recipeId])
 
   function updateIngredient(index: number, patch: Partial<Ingredient>) {
