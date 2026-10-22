@@ -17,7 +17,7 @@ export interface Recipe {
   id: string
   user_id: string
   category_id: string | null
-  source_url: string
+  source_url: string | null
   video_id: string | null
   title: string
   thumbnail_url: string | null

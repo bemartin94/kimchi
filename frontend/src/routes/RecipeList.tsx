@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Layout } from '../components/Layout'
+import { downloadCsv, toCsv } from '../lib/csv'
+import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
 import type { Category, Recipe } from '../types'
 
@@ -28,29 +30,53 @@ export function RecipeList() {
   const visible =
     activeCategory === 'all' ? recipes : recipes.filter((r) => r.category_id === activeCategory)
 
+  function handleExport() {
+    const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? ''
+    const rows = recipes.map((r) => [
+      r.title,
+      categoryName(r.category_id),
+      r.ingredients.map((ing) => (typeof ing === 'string' ? ing : formatIngredient(ing))).join('\n'),
+      r.steps.map((s, i) => `${i + 1}. ${s}`).join('\n'),
+      r.source_url ?? '',
+      r.created_at,
+    ])
+    const csv = toCsv(['Title', 'Category', 'Ingredients', 'Steps', 'Source URL', 'Saved at'], rows)
+    downloadCsv('recetario-recipes.csv', csv)
+  }
+
   return (
     <Layout>
       <div className="mx-auto max-w-2xl p-4">
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setActiveCategory('all')}
-            className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-              activeCategory === 'all' ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((c) => (
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <button
-              key={c.id}
-              onClick={() => setActiveCategory(c.id)}
+              onClick={() => setActiveCategory('all')}
               className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                activeCategory === c.id ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
+                activeCategory === 'all' ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
               }`}
             >
-              {c.name}
+              All
             </button>
-          ))}
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setActiveCategory(c.id)}
+                className={`shrink-0 rounded-full px-3 py-1 text-sm ${
+                  activeCategory === c.id ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+          {recipes.length > 0 && (
+            <button
+              onClick={handleExport}
+              className="shrink-0 whitespace-nowrap text-sm text-neutral-500 underline"
+            >
+              Export CSV
+            </button>
+          )}
         </div>
 
         {loading && <p className="text-neutral-500">Loading…</p>}

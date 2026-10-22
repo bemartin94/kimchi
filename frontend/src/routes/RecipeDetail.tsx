@@ -1,20 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Layout } from '../components/Layout'
-import { formatQuantity } from '../lib/scale'
+import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
 import { useWakeLock } from '../lib/useWakeLock'
-import type { Ingredient, Recipe } from '../types'
+import type { Recipe } from '../types'
 
 const SCALE_PRESETS = [0.5, 1, 2, 3]
-
-function formatIngredient(ing: Ingredient, scale: number): string {
-  const parts: string[] = []
-  if (ing.quantity != null) parts.push(formatQuantity(ing.quantity * scale))
-  if (ing.unit) parts.push(ing.unit)
-  parts.push(ing.item)
-  return parts.join(' ')
-}
 
 function isYouTubeUrl(url: string): boolean {
   try {
@@ -25,6 +17,18 @@ function isYouTubeUrl(url: string): boolean {
   }
 }
 
+function buildShareText(recipe: Recipe, scale: number): string {
+  const lines = [recipe.title, '']
+  lines.push('Ingredients:')
+  for (const ing of recipe.ingredients) {
+    lines.push(`- ${typeof ing === 'string' ? ing : formatIngredient(ing, scale)}`)
+  }
+  lines.push('', 'Steps:')
+  recipe.steps.forEach((step, i) => lines.push(`${i + 1}. ${step}`))
+  if (recipe.source_url) lines.push('', `Original recipe: ${recipe.source_url}`)
+  return lines.join('\n')
+}
+
 export function RecipeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -32,6 +36,7 @@ export function RecipeDetail() {
   const [loading, setLoading] = useState(true)
   const [scale, setScale] = useState(1)
   const [customScale, setCustomScale] = useState('')
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null)
   const wakeLock = useWakeLock()
 
   useEffect(() => {
@@ -48,6 +53,26 @@ export function RecipeDetail() {
 
   // Don't leave the screen pinned on if the user navigates away mid-cook.
   useEffect(() => () => wakeLock.disable(), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleShare() {
+    if (!recipe) return
+    const text = buildShareText(recipe, scale)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: recipe.title, text })
+      } catch {
+        // user cancelled the share sheet — nothing to do
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      setShareFeedback('Copied to clipboard!')
+      setTimeout(() => setShareFeedback(null), 2000)
+    } catch {
+      setShareFeedback("Couldn't copy — select and copy the text manually.")
+    }
+  }
 
   async function handleDelete() {
     if (!recipe) return
@@ -78,15 +103,26 @@ export function RecipeDetail() {
         {recipe.thumbnail_url && (
           <img src={recipe.thumbnail_url} alt="" className="mb-4 w-full rounded-lg object-cover" />
         )}
-        <h1 className="mb-1 text-xl font-semibold text-neutral-900">{recipe.title}</h1>
-        <a
-          href={recipe.source_url}
-          target="_blank"
-          rel="noreferrer"
-          className="mb-4 inline-block text-sm text-orange-600 underline"
-        >
-          {isYouTubeUrl(recipe.source_url) ? 'Watch original video' : 'View original recipe'}
-        </a>
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <h1 className="text-xl font-semibold text-neutral-900">{recipe.title}</h1>
+          <button
+            onClick={handleShare}
+            className="shrink-0 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700"
+          >
+            Share
+          </button>
+        </div>
+        {shareFeedback && <p className="mb-2 text-xs text-green-700">{shareFeedback}</p>}
+        {recipe.source_url && (
+          <a
+            href={recipe.source_url}
+            target="_blank"
+            rel="noreferrer"
+            className="mb-4 inline-block text-sm text-orange-600 underline"
+          >
+            {isYouTubeUrl(recipe.source_url) ? 'Watch original video' : 'View original recipe'}
+          </a>
+        )}
 
         <div className="mb-4 flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
           <div>

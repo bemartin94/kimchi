@@ -4,11 +4,20 @@ import { extractRecipe } from '../lib/api'
 import { supabase } from '../lib/supabaseClient'
 import type { Category, ExtractedRecipe, Ingredient } from '../types'
 
-export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
+const BLANK_RECIPE: ExtractedRecipe = {
+  title: '',
+  category: '',
+  ingredients: [{ quantity: null, unit: null, item: '' }],
+  steps: [''],
+  thumbnailUrl: null,
+}
+
+/** sourceUrl triggers AI extraction from a video/website; omit it for a blank manual-entry form. */
+export function RecipeReviewForm({ sourceUrl }: { sourceUrl?: string }) {
   const navigate = useNavigate()
-  const [extracting, setExtracting] = useState(true)
+  const [extracting, setExtracting] = useState(!!sourceUrl)
   const [error, setError] = useState<string | null>(null)
-  const [recipe, setRecipe] = useState<ExtractedRecipe | null>(null)
+  const [recipe, setRecipe] = useState<ExtractedRecipe | null>(sourceUrl ? null : BLANK_RECIPE)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState<string>('')
   const [newCategory, setNewCategory] = useState('')
@@ -28,6 +37,8 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
       .then(({ data }) => {
         const existing = data ?? []
         setCategories(existing)
+
+        if (!sourceUrl) return
 
         extractRecipe(
           sourceUrl,
@@ -66,6 +77,10 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
 
   async function handleSave() {
     if (!recipe) return
+    if (!recipe.title.trim()) {
+      setError('Give the recipe a title first.')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -85,14 +100,17 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
         finalCategoryId = data.id
       }
 
+      const ingredients = recipe.ingredients.filter((ing) => ing.item.trim() || ing.quantity != null)
+      const steps = recipe.steps.map((s) => s.trim()).filter(Boolean)
+
       const { error } = await supabase.from('recipes').insert({
         user_id: user.id,
         category_id: finalCategoryId,
-        source_url: sourceUrl,
+        source_url: sourceUrl ?? null,
         title: recipe.title,
         thumbnail_url: recipe.thumbnailUrl,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
+        ingredients,
+        steps,
       })
       if (error) throw error
       navigate('/')
@@ -134,6 +152,10 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
 
   return (
     <div className="mx-auto max-w-md p-4">
+      <button onClick={() => navigate('/')} className="mb-3 text-sm text-neutral-500 underline">
+        ← Cancel
+      </button>
+
       {recipe.thumbnailUrl && (
         <img
           src={recipe.thumbnailUrl}
@@ -145,14 +167,16 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
 
       <input
         className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-lg font-medium"
+        placeholder="Recipe title"
         value={recipe.title}
         onChange={(e) => setRecipe({ ...recipe, title: e.target.value })}
       />
 
       <h2 className="mb-1 font-semibold text-neutral-700">Ingredients</h2>
       <p className="mb-2 text-xs text-neutral-500">
-        Imperial units (lb/oz/cup/tbsp/tsp) were converted to grams or ml. Scaling is available on the
-        recipe page after saving.
+        {sourceUrl
+          ? 'Imperial units (lb/oz/cup/tbsp/tsp) were converted to grams or ml. Scaling is available on the recipe page after saving.'
+          : 'Tip: use metric units (g/ml) if you want scaling to work smoothly later.'}
       </p>
       <div className="mb-2 flex flex-col gap-1.5">
         {recipe.ingredients.map((ing, i) => (
@@ -196,13 +220,16 @@ export function RecipeReviewForm({ sourceUrl }: { sourceUrl: string }) {
       <h2 className="mb-1 font-semibold text-neutral-700">Steps</h2>
       <textarea
         className="mb-4 w-full rounded-lg border border-neutral-300 px-3 py-2"
+        placeholder="One step per line"
         rows={Math.min(14, recipe.steps.length + 1)}
         value={recipe.steps.join('\n')}
         onChange={(e) => setRecipe({ ...recipe, steps: e.target.value.split('\n') })}
       />
 
       <h2 className="mb-1 font-semibold text-neutral-700">Category</h2>
-      <p className="mb-1 text-xs text-neutral-500">Suggested automatically — change it if it's wrong.</p>
+      {sourceUrl && (
+        <p className="mb-1 text-xs text-neutral-500">Suggested automatically — change it if it's wrong.</p>
+      )}
       <select
         className="mb-2 w-full rounded-lg border border-neutral-300 px-3 py-2"
         value={categoryId}
