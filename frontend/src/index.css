@@ -1,11 +1,24 @@
 @import 'tailwindcss';
 
+/* Dark mode is toggled by adding/removing .dark on <html> (see useTheme),
+   not just followed from the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   background: #fff;
   color: #171717;
+}
+
+.dark body {
+  background: #171717;
+  color: #e5e5e5;
 }

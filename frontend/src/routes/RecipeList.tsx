@@ -11,6 +11,7 @@ export function RecipeList() {
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | 'all'>('all')
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     load()
@@ -41,8 +42,16 @@ export function RecipeList() {
     setLoading(false)
   }
 
-  const visible =
-    activeCategory === 'all' ? recipes : recipes.filter((r) => r.category_id === activeCategory)
+  const query = search.trim().toLowerCase()
+
+  const visible = recipes.filter((r) => {
+    if (activeCategory !== 'all' && r.category_id !== activeCategory) return false
+    if (!query) return true
+    if (r.title.toLowerCase().includes(query)) return true
+    return r.ingredients.some((ing) =>
+      (typeof ing === 'string' ? ing : ing.item).toLowerCase().includes(query),
+    )
+  })
 
   function handleExport() {
     const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? ''
@@ -60,13 +69,15 @@ export function RecipeList() {
 
   return (
     <Layout>
-      <div className="mx-auto max-w-2xl p-4">
+      <div className="mx-auto max-w-2xl p-4 pb-24">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setActiveCategory('all')}
               className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                activeCategory === 'all' ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
+                activeCategory === 'all'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
               }`}
             >
               All
@@ -76,7 +87,9 @@ export function RecipeList() {
                 key={c.id}
                 onClick={() => setActiveCategory(c.id)}
                 className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                  activeCategory === c.id ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
+                  activeCategory === c.id
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
                 }`}
               >
                 {c.name}
@@ -86,17 +99,23 @@ export function RecipeList() {
           {recipes.length > 0 && (
             <button
               onClick={handleExport}
-              className="shrink-0 whitespace-nowrap text-sm text-neutral-500 underline"
+              className="shrink-0 whitespace-nowrap text-sm text-neutral-500 underline dark:text-neutral-400"
             >
               Export CSV
             </button>
           )}
         </div>
 
-        {loading && <p className="text-neutral-500">Loading…</p>}
+        {loading && <p className="text-neutral-500 dark:text-neutral-400">Loading…</p>}
 
-        {!loading && visible.length === 0 && (
-          <div className="mt-12 text-center text-neutral-500">
+        {!loading && visible.length === 0 && recipes.length > 0 && (
+          <div className="mt-12 text-center text-neutral-500 dark:text-neutral-400">
+            <p>No recipes match "{search}".</p>
+          </div>
+        )}
+
+        {!loading && recipes.length === 0 && (
+          <div className="mt-12 text-center text-neutral-500 dark:text-neutral-400">
             <p>No recipes yet.</p>
             <p className="text-sm">
               Share a recipe from YouTube, or{' '}
@@ -113,19 +132,29 @@ export function RecipeList() {
             <Link
               key={r.id}
               to={`/recipes/${r.id}`}
-              className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+              className="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800"
             >
               {r.thumbnail_url ? (
                 <img src={r.thumbnail_url} alt="" className="aspect-video w-full object-cover" />
               ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-neutral-100 text-2xl">
+                <div className="flex aspect-video w-full items-center justify-center bg-neutral-100 text-2xl dark:bg-neutral-700">
                   🍽️
                 </div>
               )}
-              <p className="p-2 text-sm font-medium text-neutral-800">{r.title}</p>
+              <p className="p-2 text-sm font-medium text-neutral-800 dark:text-neutral-200">{r.title}</p>
             </Link>
           ))}
         </div>
+      </div>
+
+      <div className="fixed bottom-4 left-1/2 w-[calc(100%-2rem)] max-w-md -translate-x-1/2">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search your recipes…"
+          className="w-full rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 shadow-lg shadow-black/10 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+        />
       </div>
     </Layout>
   )

@@ -112,21 +112,21 @@ export function RecipeDetail() {
           <img src={recipe.thumbnail_url} alt="" className="mb-4 w-full rounded-lg object-cover" />
         )}
         <div className="mb-1 flex items-start justify-between gap-2">
-          <h1 className="text-xl font-semibold text-neutral-900">{recipe.title}</h1>
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{recipe.title}</h1>
           {isOwner && (
             <button
               onClick={handleShare}
-              className="shrink-0 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700"
+              className="shrink-0 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
             >
               Share
             </button>
           )}
         </div>
-        {shareFeedback && <p className="mb-2 text-xs text-green-700">{shareFeedback}</p>}
+        {shareFeedback && <p className="mb-2 text-xs text-green-700 dark:text-green-400">{shareFeedback}</p>}
         {isOwner && recipe.share_token && (
-          <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500">
+          <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="truncate">{publicUrlFor(recipe.share_token)}</span>
-            <button onClick={handleStopSharing} className="shrink-0 text-red-600 underline">
+            <button onClick={handleStopSharing} className="shrink-0 text-red-600 underline dark:text-red-400">
               Stop sharing
             </button>
           </div>
@@ -136,17 +136,17 @@ export function RecipeDetail() {
             href={recipe.source_url}
             target="_blank"
             rel="noreferrer"
-            className="mb-4 inline-block text-sm text-orange-600 underline"
+            className="mb-4 inline-block text-sm text-orange-600 underline dark:text-orange-400"
           >
             {isYouTubeUrl(recipe.source_url) ? 'Watch original video' : 'View original recipe'}
           </a>
         )}
 
-        <div className="mb-4 rounded-lg border border-neutral-200 bg-white px-3 py-2">
+        <div className="mb-4 rounded-lg border border-neutral-200 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-neutral-800">Cooking Mode</p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Cooking Mode</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 {wakeLock.supported ? 'Keeps your screen from locking' : 'Not supported in this browser'}
               </p>
             </div>
@@ -154,17 +154,19 @@ export function RecipeDetail() {
               disabled={!wakeLock.supported}
               onClick={() => (wakeLock.active ? wakeLock.disable() : wakeLock.enable())}
               className={`rounded-full px-3 py-1 text-sm disabled:opacity-40 ${
-                wakeLock.active ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
+                wakeLock.active
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300'
               }`}
             >
               {wakeLock.active ? 'On' : 'Off'}
             </button>
           </div>
-          {wakeLock.error && <p className="mt-2 text-xs text-red-600">{wakeLock.error}</p>}
+          {wakeLock.error && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{wakeLock.error}</p>}
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-neutral-700">Scale:</span>
+          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Scale:</span>
           {SCALE_PRESETS.map((p) => (
             <button
               key={p}
@@ -175,7 +177,7 @@ export function RecipeDetail() {
               className={`rounded-full px-3 py-1 text-sm ${
                 scale === p && customScale === ''
                   ? 'bg-orange-600 text-white'
-                  : 'bg-neutral-200 text-neutral-700'
+                  : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
               }`}
             >
               {p}x
@@ -193,26 +195,29 @@ export function RecipeDetail() {
               const n = Number(e.target.value)
               if (e.target.value !== '' && n > 0) setScale(n)
             }}
-            className="w-20 rounded-lg border border-neutral-300 px-2 py-1 text-sm"
+            className="w-20 rounded-lg border border-neutral-300 px-2 py-1 text-sm dark:border-neutral-600 dark:bg-neutral-800"
           />
         </div>
 
-        <h2 className="mb-1 font-semibold text-neutral-700">
-          Ingredients {scale !== 1 && <span className="font-normal text-neutral-400">({scale}x)</span>}
+        <h2 className="mb-1 font-semibold text-neutral-700 dark:text-neutral-300">
+          Ingredients{' '}
+          {scale !== 1 && (
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">({scale}x)</span>
+          )}
         </h2>
-        <ul className="mb-4 list-disc pl-5 text-neutral-800">
+        <ul className="mb-4 list-disc pl-5 text-neutral-800 dark:text-neutral-200">
           {recipe.ingredients.map((ing, i) => (
             <li key={i}>{typeof ing === 'string' ? ing : formatIngredient(ing, scale)}</li>
           ))}
         </ul>
 
-        <h2 className="mb-1 font-semibold text-neutral-700">Steps</h2>
+        <h2 className="mb-1 font-semibold text-neutral-700 dark:text-neutral-300">Steps</h2>
         {scale !== 1 && (
-          <p className="mb-2 text-xs text-neutral-500">
+          <p className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
             Steps are written for the original batch size — adjust cook times/pan sizes by eye.
           </p>
         )}
-        <ol className="mb-6 list-decimal pl-5 text-neutral-800">
+        <ol className="mb-6 list-decimal pl-5 text-neutral-800 dark:text-neutral-200">
           {recipe.steps.map((step, i) => (
             <li key={i} className="mb-1">
               {step}
@@ -222,10 +227,13 @@ export function RecipeDetail() {
 
         {isOwner && (
           <div className="flex gap-4">
-            <Link to={`/recipes/${recipe.id}/edit`} className="text-sm text-orange-600 underline">
+            <Link
+              to={`/recipes/${recipe.id}/edit`}
+              className="text-sm text-orange-600 underline dark:text-orange-400"
+            >
               Edit recipe
             </Link>
-            <button onClick={handleDelete} className="text-sm text-red-600 underline">
+            <button onClick={handleDelete} className="text-sm text-red-600 underline dark:text-red-400">
               Delete recipe
             </button>
           </div>
