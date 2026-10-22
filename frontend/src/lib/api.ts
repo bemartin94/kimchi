@@ -2,12 +2,9 @@ import type { ExtractedRecipe } from '../types'
 import { supabase } from './supabaseClient'
 
 /** Calls the `extract-recipe` Edge Function: a YouTube video or recipe-website URL -> structured recipe. */
-export async function extractRecipe(
-  url: string,
-  existingCategories: string[],
-): Promise<ExtractedRecipe> {
+export async function extractRecipe(url: string, existingTags: string[]): Promise<ExtractedRecipe> {
   const { data, error } = await supabase.functions.invoke<ExtractedRecipe>('extract-recipe', {
-    body: { url, existingCategories },
+    body: { url, existingTags },
   })
 
   if (error) {

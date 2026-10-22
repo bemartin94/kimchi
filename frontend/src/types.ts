@@ -5,7 +5,7 @@ export interface Profile {
   created_at: string
 }
 
-export interface Category {
+export interface Tag {
   id: string
   user_id: string
   name: string
@@ -23,7 +23,6 @@ export interface Ingredient {
 export interface Recipe {
   id: string
   user_id: string
-  category_id: string | null
   source_url: string | null
   video_id: string | null
   title: string
@@ -33,6 +32,8 @@ export interface Recipe {
   raw_transcript: string | null
   share_token: string | null
   created_at: string
+  /** Present when fetched with the nested `recipe_tags(tags(*))` select; see lib/tags.ts. */
+  recipe_tags?: { tags: Tag }[]
 }
 
 export interface SharedRecipe {
@@ -47,8 +48,8 @@ export interface SharedRecipe {
 
 export interface ExtractedRecipe {
   title: string
-  /** AI-suggested category: an existing category name verbatim, or a new short one. */
-  category: string
+  /** AI-suggested tags: exactly 3, reusing existing tag names where they fit. */
+  tags: string[]
   ingredients: Ingredient[]
   steps: string[]
   thumbnailUrl: string | null

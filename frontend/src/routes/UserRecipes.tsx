@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { supabase } from '../lib/supabaseClient'
+import { syncRecipeTags, tagsOf } from '../lib/tags'
 import type { Profile, Recipe } from '../types'
 
 export function UserRecipes() {
@@ -26,7 +27,11 @@ export function UserRecipes() {
 
     const [{ data: profileData }, { data: recipeData }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', id).single(),
-      supabase.from('recipes').select('*').eq('user_id', id).order('created_at', { ascending: false }),
+      supabase
+        .from('recipes')
+        .select('*, recipe_tags(tags(*))')
+        .eq('user_id', id)
+        .order('created_at', { ascending: false }),
     ])
     setProfile(profileData ?? null)
     setRecipes(recipeData ?? [])
@@ -39,16 +44,23 @@ export function UserRecipes() {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) return
-    const { error } = await supabase.from('recipes').insert({
-      user_id: user.id,
-      category_id: null,
-      source_url: recipe.source_url,
-      title: recipe.title,
-      thumbnail_url: recipe.thumbnail_url,
-      ingredients: recipe.ingredients,
-      steps: recipe.steps,
-    })
-    if (!error) setSavedIds((prev) => new Set(prev).add(recipe.id))
+    const { data: inserted, error } = await supabase
+      .from('recipes')
+      .insert({
+        user_id: user.id,
+        source_url: recipe.source_url,
+        title: recipe.title,
+        thumbnail_url: recipe.thumbnail_url,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+      })
+      .select()
+      .single()
+    if (!error && inserted) {
+      const tagNames = tagsOf(recipe).map((t) => t.name)
+      await syncRecipeTags(inserted.id, user.id, tagNames)
+      setSavedIds((prev) => new Set(prev).add(recipe.id))
+    }
     setSavingId(null)
   }
 

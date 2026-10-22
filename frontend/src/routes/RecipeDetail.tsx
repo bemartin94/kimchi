@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
+import { tagsOf } from '../lib/tags'
 import { useWakeLock } from '../lib/useWakeLock'
 import type { Recipe } from '../types'
 
@@ -35,7 +36,7 @@ export function RecipeDetail() {
   useEffect(() => {
     Promise.all([
       supabase.auth.getUser(),
-      supabase.from('recipes').select('*').eq('id', id).single(),
+      supabase.from('recipes').select('*, recipe_tags(tags(*))').eq('id', id).single(),
     ]).then(([{ data: userData }, { data: recipeData }]) => {
       setRecipe(recipeData)
       setIsOwner(!!userData.user && recipeData?.user_id === userData.user.id)
@@ -117,6 +118,18 @@ export function RecipeDetail() {
           )}
         </div>
         {shareFeedback && <p className="mb-2 text-xs text-green-700 dark:text-green-400">{shareFeedback}</p>}
+        {tagsOf(recipe).length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {tagsOf(recipe).map((tag) => (
+              <span
+                key={tag.id}
+                className="rounded-full bg-neutral-200 px-2.5 py-0.5 text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
         {recipe.source_url && (
           <a
             href={recipe.source_url}

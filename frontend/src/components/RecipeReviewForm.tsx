@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { extractRecipe } from '../lib/api'
 import { supabase } from '../lib/supabaseClient'
-import type { Category, ExtractedRecipe, Ingredient } from '../types'
+import { syncRecipeTags, tagsOf } from '../lib/tags'
+import type { ExtractedRecipe, Ingredient } from '../types'
 
 const BLANK_RECIPE: ExtractedRecipe = {
   title: '',
-  category: '',
+  tags: [],
   ingredients: [{ quantity: null, unit: null, item: '' }],
   steps: [''],
   thumbnailUrl: null,
@@ -25,9 +26,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
   const [extracting, setExtracting] = useState(!!sourceUrl || !!recipeId)
   const [error, setError] = useState<string | null>(null)
   const [recipe, setRecipe] = useState<ExtractedRecipe | null>(sourceUrl || recipeId ? null : BLANK_RECIPE)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [categoryId, setCategoryId] = useState<string>('')
-  const [newCategory, setNewCategory] = useState('')
+  const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
   const startedRef = useRef(false)
 
@@ -40,22 +39,21 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
 
-      // Categories SELECT is no longer owner-only at the RLS level (a public
-      // profile's rows are also readable, for Browse), so "my categories" for
-      // the picker/AI-hint has to filter explicitly.
+      // Tags SELECT is no longer owner-only at the RLS level (a public
+      // profile's rows are also readable), so "my tags" for the AI hint has
+      // to filter explicitly.
       supabase
-        .from('categories')
-        .select('*')
+        .from('tags')
+        .select('name')
         .eq('user_id', user.id)
         .order('name')
         .then(({ data }) => {
-          const existing = data ?? []
-          setCategories(existing)
+          const existingTagNames = (data ?? []).map((t) => t.name)
 
           if (recipeId) {
             supabase
               .from('recipes')
-              .select('*')
+              .select('*, recipe_tags(tags(*))')
               .eq('id', recipeId)
               .eq('user_id', user.id)
               .single()
@@ -67,12 +65,11 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
                 }
                 setRecipe({
                   title: existingRecipe.title,
-                  category: '',
+                  tags: tagsOf(existingRecipe).map((t) => t.name),
                   ingredients: existingRecipe.ingredients,
                   steps: existingRecipe.steps,
                   thumbnailUrl: existingRecipe.thumbnail_url,
                 })
-                setCategoryId(existingRecipe.category_id ?? '')
                 setExtracting(false)
               })
             return
@@ -80,20 +77,8 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
 
           if (!sourceUrl) return
 
-          extractRecipe(
-            sourceUrl,
-            existing.map((c) => c.name),
-          )
-            .then((result) => {
-              setRecipe(result)
-              const match = existing.find((c) => c.name.toLowerCase() === result.category.toLowerCase())
-              if (match) {
-                setCategoryId(match.id)
-              } else {
-                setCategoryId('')
-                setNewCategory(result.category)
-              }
-            })
+          extractRecipe(sourceUrl, existingTagNames)
+            .then((result) => setRecipe(result))
             .catch((err) => setError(err instanceof Error ? err.message : 'Extraction failed.'))
             .finally(() => setExtracting(false))
         })
@@ -116,6 +101,21 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
     setRecipe({ ...recipe, ingredients: [...recipe.ingredients, { quantity: null, unit: null, item: '' }] })
   }
 
+  function addTag() {
+    if (!recipe) return
+    const name = tagInput.trim()
+    if (!name) return
+    if (!recipe.tags.some((t) => t.toLowerCase() === name.toLowerCase())) {
+      setRecipe({ ...recipe, tags: [...recipe.tags, name] })
+    }
+    setTagInput('')
+  }
+
+  function removeTag(name: string) {
+    if (!recipe) return
+    setRecipe({ ...recipe, tags: recipe.tags.filter((t) => t !== name) })
+  }
+
   async function handleSave() {
     if (!recipe) return
     if (!recipe.title.trim()) {
@@ -130,17 +130,6 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
       } = await supabase.auth.getUser()
       if (!user) throw new Error('Not signed in.')
 
-      let finalCategoryId = categoryId || null
-      if (!finalCategoryId && newCategory.trim()) {
-        const { data, error } = await supabase
-          .from('categories')
-          .insert({ name: newCategory.trim(), user_id: user.id })
-          .select()
-          .single()
-        if (error) throw error
-        finalCategoryId = data.id
-      }
-
       const ingredients = recipe.ingredients.filter((ing) => ing.item.trim() || ing.quantity != null)
       const steps = recipe.steps.map((s) => s.trim()).filter(Boolean)
 
@@ -148,7 +137,6 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         const { error } = await supabase
           .from('recipes')
           .update({
-            category_id: finalCategoryId,
             title: recipe.title,
             thumbnail_url: recipe.thumbnailUrl,
             ingredients,
@@ -156,20 +144,25 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
           })
           .eq('id', recipeId)
         if (error) throw error
+        await syncRecipeTags(recipeId, user.id, recipe.tags)
         navigate(`/recipes/${recipeId}`)
         return
       }
 
-      const { error } = await supabase.from('recipes').insert({
-        user_id: user.id,
-        category_id: finalCategoryId,
-        source_url: sourceUrl ?? null,
-        title: recipe.title,
-        thumbnail_url: recipe.thumbnailUrl,
-        ingredients,
-        steps,
-      })
+      const { data: inserted, error } = await supabase
+        .from('recipes')
+        .insert({
+          user_id: user.id,
+          source_url: sourceUrl ?? null,
+          title: recipe.title,
+          thumbnail_url: recipe.thumbnailUrl,
+          ingredients,
+          steps,
+        })
+        .select()
+        .single()
       if (error) throw error
+      await syncRecipeTags(inserted.id, user.id, recipe.tags)
       navigate('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed.')
@@ -288,30 +281,36 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         onChange={(e) => setRecipe({ ...recipe, steps: e.target.value.split('\n') })}
       />
 
-      <h2 className="mb-1 font-semibold text-neutral-700">Category</h2>
+      <h2 className="mb-1 font-semibold text-neutral-700">Tags</h2>
       {sourceUrl && (
-        <p className="mb-1 text-xs text-neutral-500">Suggested automatically — change it if it's wrong.</p>
+        <p className="mb-1 text-xs text-neutral-500">3 tags suggested automatically — edit as you like.</p>
       )}
-      <select
-        className="mb-2 w-full rounded-lg border border-neutral-300 px-3 py-2"
-        value={categoryId}
-        onChange={(e) => setCategoryId(e.target.value)}
-      >
-        <option value="">New category…</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {recipe.tags.map((tag) => (
+          <span
+            key={tag}
+            className="flex items-center gap-1 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700"
+          >
+            {tag}
+            <button onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`} className="text-neutral-500">
+              ✕
+            </button>
+          </span>
         ))}
-      </select>
-      {!categoryId && (
-        <input
-          className="mb-4 w-full rounded-lg border border-neutral-300 px-3 py-2"
-          placeholder="e.g. Desserts"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-        />
-      )}
+      </div>
+      <input
+        className="mb-4 w-full rounded-lg border border-neutral-300 px-3 py-2"
+        placeholder="Add a tag and press Enter"
+        value={tagInput}
+        onChange={(e) => setTagInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault()
+            addTag()
+          }
+        }}
+        onBlur={addTag}
+      />
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 

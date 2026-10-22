@@ -1,8 +1,9 @@
 // Supabase Edge Function (Deno runtime).
 // Given a recipe URL — a YouTube video OR any recipe website — produces a
-// structured recipe (title/category/ingredients/steps/thumbnail) with
+// structured recipe (title/tags/ingredients/steps/thumbnail) with
 // ingredients split into {quantity, unit, item}, deterministically converts
 // imperial units (lb/oz -> g, cup/tbsp/tsp/fl oz -> ml), and returns that JSON.
+// Suggests exactly 3 tags per recipe.
 //
 // YouTube: transcript fetched via Supadata (see fetchTranscript below for why
 // not YouTube's own endpoint directly). Websites: tries schema.org JSON-LD
@@ -278,17 +279,17 @@ function normalizeIngredient(raw: RawIngredient): RawIngredient {
   return raw
 }
 
-// ---------- AI structuring (title/category/ingredients/steps only — no unit math) ----------
+// ---------- AI structuring (title/tags/ingredients/steps only — no unit math) ----------
 
-async function structureRecipe(sourceText: string, existingCategories: string[]) {
+async function structureRecipe(sourceText: string, existingTags: string[]) {
   const apiKey = Deno.env.get('GROQ_API_KEY')
   if (!apiKey) throw new Error('GROQ_API_KEY is not configured.')
 
-  const categoryHint =
-    existingCategories.length > 0
-      ? `The user's existing categories are: ${JSON.stringify(existingCategories)}. ` +
-        'If one of these clearly fits this recipe, use that exact name. Otherwise suggest a new short category name (1-2 words, Title Case).'
-      : 'Suggest a short category name for this recipe (1-2 words, Title Case), e.g. "Dinner", "Dessert", "Breakfast".'
+  const tagHint =
+    existingTags.length > 0
+      ? `The user's existing tags are: ${JSON.stringify(existingTags)}. ` +
+        'Reuse any of these that clearly fit this recipe (exact name), and fill any remaining slots with new short tags.'
+      : 'Suggest short, lowercase, single-or-two-word tags (e.g. "dinner", "dessert", "quick", "vegetarian", "spicy").'
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -306,7 +307,8 @@ async function structureRecipe(sourceText: string, existingCategories: string[])
           content:
             'You turn raw recipe source text (a cooking video transcript, or scraped recipe-website content) into a clean recipe. ' +
             'Respond with ONLY a JSON object: ' +
-            '{"title": string, "category": string, "ingredients": [{"quantity": number|null, "unit": string|null, "item": string}], "steps": string[]}. ' +
+            '{"title": string, "tags": string[], "ingredients": [{"quantity": number|null, "unit": string|null, "item": string}], "steps": string[]}. ' +
+            '"tags" must have EXACTLY 3 short tags describing this recipe (meal type, cuisine, diet, main ingredient, or cooking method). ' +
             '\n\nFor each ingredient, pull out quantity and unit exactly as stated, for EVERY ingredient that has a stated amount — ' +
             'this includes small amounts of sauces, oils, and spices (e.g. "3 tbsp soy sauce"), not just the main proteins/vegetables. ' +
             'One ingredient = one line; if the same ingredient is restated in two units, merge it into a single line. ' +
@@ -314,7 +316,7 @@ async function structureRecipe(sourceText: string, existingCategories: string[])
             'Only use quantity null and unit null when the source truly gives no amount at all (vague phrasing like "a glug of soy sauce", or "salt to taste"). ' +
             'Do not invent a specific number for those vague cases — null is correct and expected for them. ' +
             '\n\nSteps should be short, numbered-in-order instructions. ' +
-            `${categoryHint} ` +
+            `${tagHint} ` +
             'If the source text clearly contains no recipe at all, respond with empty ingredients/steps arrays rather than inventing one. ' +
             'Do not invent ingredients that are never mentioned.',
         },
@@ -340,9 +342,11 @@ async function structureRecipe(sourceText: string, existingCategories: string[])
       }))
     : []
 
+  const tags = Array.isArray(parsed.tags) ? parsed.tags.map(String).filter(Boolean) : []
+
   return {
     title: String(parsed.title ?? 'Untitled recipe'),
-    category: String(parsed.category ?? 'Uncategorized'),
+    tags: tags.slice(0, 3),
     ingredients: rawIngredients.map(normalizeIngredient),
     steps: Array.isArray(parsed.steps) ? parsed.steps.map(String) : [],
   }
@@ -358,7 +362,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url, existingCategories } = await req.json()
+    const { url, existingTags } = await req.json()
     if (!url) return jsonResponse({ error: 'Missing url.' }, 400)
 
     let parsedUrl: URL
@@ -368,7 +372,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'That does not look like a valid URL.' }, 400)
     }
 
-    const categories = Array.isArray(existingCategories) ? existingCategories.map(String) : []
+    const tags = Array.isArray(existingTags) ? existingTags.map(String) : []
     const videoId = extractYouTubeVideoId(url)
 
     let sourceText: string
@@ -386,7 +390,7 @@ Deno.serve(async (req) => {
       thumbnailUrl = content.thumbnailUrl
     }
 
-    const recipe = await structureRecipe(sourceText, categories)
+    const recipe = await structureRecipe(sourceText, tags)
     return jsonResponse({ ...recipe, thumbnailUrl })
   } catch (err) {
     if (err instanceof TranscriptUnavailableError) {

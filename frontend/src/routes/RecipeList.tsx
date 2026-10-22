@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { downloadCsv, toCsv } from '../lib/csv'
 import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
-import type { Category, Recipe } from '../types'
+import { tagsOf } from '../lib/tags'
+import type { Recipe } from '../types'
 
 export function RecipeList() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [activeCategory, setActiveCategory] = useState<string | 'all'>('all')
+  const [activeTag, setActiveTag] = useState<string | 'all'>('all')
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
@@ -26,26 +26,30 @@ export function RecipeList() {
       setLoading(false)
       return
     }
-    // Recipes/categories SELECT is no longer owner-only at the RLS level (a
-    // public profile's rows are also readable, for the Browse feature), so
-    // "my recipes" now has to filter explicitly rather than relying on RLS.
-    const [{ data: recipeData }, { data: categoryData }] = await Promise.all([
-      supabase
-        .from('recipes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
-    ])
+    // Recipes SELECT is no longer owner-only at the RLS level (a public
+    // profile's rows are also readable), so "my recipes" has to filter
+    // explicitly rather than relying on RLS.
+    const { data: recipeData } = await supabase
+      .from('recipes')
+      .select('*, recipe_tags(tags(*))')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
     setRecipes(recipeData ?? [])
-    setCategories(categoryData ?? [])
     setLoading(false)
   }
+
+  const allTags = useMemo(() => {
+    const byId = new Map<string, string>()
+    for (const r of recipes) {
+      for (const tag of tagsOf(r)) byId.set(tag.id, tag.name)
+    }
+    return [...byId.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
+  }, [recipes])
 
   const query = search.trim().toLowerCase()
 
   const visible = recipes.filter((r) => {
-    if (activeCategory !== 'all' && r.category_id !== activeCategory) return false
+    if (activeTag !== 'all' && !tagsOf(r).some((t) => t.id === activeTag)) return false
     if (!query) return true
     if (r.title.toLowerCase().includes(query)) return true
     return r.ingredients.some((ing) =>
@@ -54,16 +58,17 @@ export function RecipeList() {
   })
 
   function handleExport() {
-    const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? ''
     const rows = recipes.map((r) => [
       r.title,
-      categoryName(r.category_id),
+      tagsOf(r)
+        .map((t) => t.name)
+        .join('; '),
       r.ingredients.map((ing) => (typeof ing === 'string' ? ing : formatIngredient(ing))).join('\n'),
       r.steps.map((s, i) => `${i + 1}. ${s}`).join('\n'),
       r.source_url ?? '',
       r.created_at,
     ])
-    const csv = toCsv(['Title', 'Category', 'Ingredients', 'Steps', 'Source URL', 'Saved at'], rows)
+    const csv = toCsv(['Title', 'Tags', 'Ingredients', 'Steps', 'Source URL', 'Saved at'], rows)
     downloadCsv('recetario-recipes.csv', csv)
   }
 
@@ -73,26 +78,26 @@ export function RecipeList() {
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
-              onClick={() => setActiveCategory('all')}
+              onClick={() => setActiveTag('all')}
               className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                activeCategory === 'all'
+                activeTag === 'all'
                   ? 'bg-orange-600 text-white'
                   : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
               }`}
             >
               All
             </button>
-            {categories.map((c) => (
+            {allTags.map((t) => (
               <button
-                key={c.id}
-                onClick={() => setActiveCategory(c.id)}
+                key={t.id}
+                onClick={() => setActiveTag(t.id)}
                 className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                  activeCategory === c.id
+                  activeTag === t.id
                     ? 'bg-orange-600 text-white'
                     : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
                 }`}
               >
-                {c.name}
+                {t.name}
               </button>
             ))}
           </div>
