@@ -1,0 +1,54 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { AuthProvider } from './lib/AuthContext'
+import { AddRecipe } from './routes/AddRecipe'
+import { Auth } from './routes/Auth'
+import { RecipeDetail } from './routes/RecipeDetail'
+import { RecipeList } from './routes/RecipeList'
+import { ShareTarget } from './routes/ShareTarget'
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <RecipeList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add"
+            element={
+              <ProtectedRoute>
+                <AddRecipe />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/share-target"
+            element={
+              <ProtectedRoute>
+                <ShareTarget />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recipes/:id"
+            element={
+              <ProtectedRoute>
+                <RecipeDetail />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}
+
+export default App

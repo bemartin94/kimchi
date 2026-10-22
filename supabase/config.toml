@@ -1,0 +1,5 @@
+# Minimal config for the Supabase CLI. Run `supabase link --project-ref <ref>`
+# after creating your project, then `supabase db push` and
+# `supabase functions deploy extract-recipe` to apply this repo's
+# migrations/functions. See ../SETUP.md.
+project_id = "recetario"
