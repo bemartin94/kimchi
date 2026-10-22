@@ -137,13 +137,17 @@ export function RecipeList() {
         </div>
       </div>
 
-      <div className="fixed bottom-20 left-1/2 w-[calc(100%-2rem)] max-w-md -translate-x-1/2">
+      <div className="fixed bottom-20 left-1/2 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-2.5 rounded-full border border-line bg-card px-4 py-3 shadow-lg shadow-black/10">
+        <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0 text-muted">
+          <circle cx="7.5" cy="7.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="11.6" y1="11.6" x2="16" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search your recipes…"
-          className="w-full rounded-full border border-line bg-card px-4 py-3 text-sm text-ink shadow-lg shadow-black/10"
+          className="w-full min-w-0 flex-1 bg-transparent text-sm text-ink outline-none"
         />
       </div>
     </Layout>
