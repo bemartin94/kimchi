@@ -80,9 +80,7 @@ export function RecipeList() {
             <button
               onClick={() => setActiveTag('all')}
               className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                activeTag === 'all'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
+                activeTag === 'all' ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
               }`}
             >
               All
@@ -92,9 +90,7 @@ export function RecipeList() {
                 key={t.id}
                 onClick={() => setActiveTag(t.id)}
                 className={`shrink-0 rounded-full px-3 py-1 text-sm ${
-                  activeTag === t.id
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'
+                  activeTag === t.id ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
                 }`}
               >
                 {t.name}
@@ -104,27 +100,27 @@ export function RecipeList() {
           {recipes.length > 0 && (
             <button
               onClick={handleExport}
-              className="shrink-0 whitespace-nowrap text-sm text-neutral-500 underline dark:text-neutral-400"
+              className="shrink-0 whitespace-nowrap text-sm text-muted underline"
             >
               Export CSV
             </button>
           )}
         </div>
 
-        {loading && <p className="text-neutral-500 dark:text-neutral-400">Loading…</p>}
+        {loading && <p className="text-muted">Loading…</p>}
 
         {!loading && visible.length === 0 && recipes.length > 0 && (
-          <div className="mt-12 text-center text-neutral-500 dark:text-neutral-400">
+          <div className="mt-12 text-center text-muted">
             <p>No recipes match "{search}".</p>
           </div>
         )}
 
         {!loading && recipes.length === 0 && (
-          <div className="mt-12 text-center text-neutral-500 dark:text-neutral-400">
+          <div className="mt-12 text-center text-muted">
             <p>No recipes yet.</p>
             <p className="text-sm">
               Share a recipe from YouTube, or{' '}
-              <Link to="/add" className="text-orange-600 underline">
+              <Link to="/add" className="text-primary-ink underline">
                 add one from any recipe website
               </Link>
               .
@@ -137,16 +133,16 @@ export function RecipeList() {
             <Link
               key={r.id}
               to={`/recipes/${r.id}`}
-              className="overflow-hidden rounded-lg border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800"
+              className="overflow-hidden rounded-lg border border-line bg-card"
             >
               {r.thumbnail_url ? (
                 <img src={r.thumbnail_url} alt="" className="aspect-video w-full object-cover" />
               ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-neutral-100 text-2xl dark:bg-neutral-700">
+                <div className="flex aspect-video w-full items-center justify-center bg-pill text-2xl">
                   🍽️
                 </div>
               )}
-              <p className="p-2 text-sm font-medium text-neutral-800 dark:text-neutral-200">{r.title}</p>
+              <p className="p-2 text-sm font-medium text-ink">{r.title}</p>
             </Link>
           ))}
         </div>
@@ -158,7 +154,7 @@ export function RecipeList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search your recipes…"
-          className="w-full rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 shadow-lg shadow-black/10 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+          className="w-full rounded-full border border-line bg-card px-4 py-3 text-sm text-ink shadow-lg shadow-black/10"
         />
       </div>
     </Layout>

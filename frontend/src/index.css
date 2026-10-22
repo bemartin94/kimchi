@@ -4,21 +4,78 @@
    not just followed from the OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Kimchi palette (from the Claude Design handoff, RecetarioPhoneTabs).
+ * Each token is redefined under .dark, then exposed as a Tailwind color via
+ * @theme below -- so `bg-primary`, `text-muted`, etc. work in both modes
+ * without ever writing a `dark:` pair.
+ */
 :root {
   color-scheme: light;
+
+  --primary: #b85000;
+  --primary-hover: #9c4400;
+  --primary-ink: #b85000;
+  --emphasis: #d42800;
+  --brand: #e16600;
+  --destructive: #c10c01;
+  --destructive-ink: #c10c01;
+  --success: #617800;
+  --success-ink: #617800;
+
+  --app-bg: #faf6f1;
+  --card: #ffffff;
+  --ink: #2a1e1a;
+  --muted: #704e44;
+  --line: #e8ddd6;
+  --pill: #f2eae3;
+  --pill-ink: #704e44;
 }
 
 :root.dark {
   color-scheme: dark;
+
+  --primary: #c05300;
+  --primary-hover: #a84a00;
+  --primary-ink: #f08a3c;
+  --emphasis: #d42800;
+  --brand: #e16600;
+  --destructive: #c10c01;
+  --destructive-ink: #ff7a66;
+  --success: #617800;
+  --success-ink: #a8c24a;
+
+  --app-bg: #1a1412;
+  --card: #241c19;
+  --ink: #f4ece6;
+  --muted: #b8a39b;
+  --line: #3a2e2a;
+  --pill: #2e2420;
+  --pill-ink: #b8a39b;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-emphasis: var(--emphasis);
+  --color-brand: var(--brand);
+  --color-destructive: var(--destructive);
+  --color-destructive-ink: var(--destructive-ink);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+
+  --color-app-bg: var(--app-bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-pill: var(--pill);
+  --color-pill-ink: var(--pill-ink);
 }
 
 body {
   margin: 0;
-  background: #fff;
-  color: #171717;
-}
-
-.dark body {
-  background: #171717;
-  color: #e5e5e5;
+  background: var(--app-bg);
+  color: var(--ink);
 }

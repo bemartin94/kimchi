@@ -67,7 +67,7 @@ export function UserRecipes() {
   if (loading) {
     return (
       <Layout>
-        <p className="p-6 text-neutral-500">Loading…</p>
+        <p className="p-6 text-muted">Loading…</p>
       </Layout>
     )
   }
@@ -77,7 +77,7 @@ export function UserRecipes() {
   if (!isSelf && profile && !profile.is_public) {
     return (
       <Layout>
-        <div className="mx-auto max-w-md p-6 text-center text-neutral-500">
+        <div className="mx-auto max-w-md p-6 text-center text-muted">
           <p>{title}'s profile is private.</p>
         </div>
       </Layout>
@@ -87,26 +87,26 @@ export function UserRecipes() {
   return (
     <Layout>
       <div className="mx-auto max-w-2xl p-4">
-        <h1 className="mb-4 text-xl font-semibold text-neutral-900">{title}'s recipes</h1>
+        <h1 className="mb-4 text-xl font-semibold text-ink">{title}'s recipes</h1>
 
-        {recipes.length === 0 && <p className="text-sm text-neutral-500">No recipes yet.</p>}
+        {recipes.length === 0 && <p className="text-sm text-muted">No recipes yet.</p>}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {recipes.map((r) => (
-            <div key={r.id} className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+            <div key={r.id} className="overflow-hidden rounded-lg border border-line bg-card">
               {r.thumbnail_url ? (
                 <img src={r.thumbnail_url} alt="" className="aspect-video w-full object-cover" />
               ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-neutral-100 text-2xl">
+                <div className="flex aspect-video w-full items-center justify-center bg-pill text-2xl">
                   🍽️
                 </div>
               )}
-              <p className="p-2 text-sm font-medium text-neutral-800">{r.title}</p>
+              <p className="p-2 text-sm font-medium text-ink">{r.title}</p>
               {!isSelf && (
                 <button
                   onClick={() => handleSave(r)}
                   disabled={savingId === r.id || savedIds.has(r.id)}
-                  className="w-full border-t border-neutral-200 py-1.5 text-xs font-medium text-orange-600 disabled:text-neutral-400"
+                  className="w-full border-t border-line py-1.5 text-xs font-medium text-primary-ink disabled:text-muted"
                 >
                   {savedIds.has(r.id) ? 'Saved ✓' : savingId === r.id ? 'Saving…' : 'Save to my recipes'}
                 </button>

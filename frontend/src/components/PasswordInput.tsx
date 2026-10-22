@@ -20,13 +20,13 @@ export function PasswordInput({ value, onChange, placeholder, minLength, require
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-neutral-300 px-3 py-2 pr-10 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+        className="w-full rounded-lg border border-line bg-card px-3 py-2 pr-10 text-ink"
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? 'Hide password' : 'Show password'}
-        className="absolute inset-y-0 right-0 flex items-center px-3 text-neutral-400 dark:text-neutral-500"
+        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted"
       >
         {visible ? (
           // eye-off

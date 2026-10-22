@@ -173,8 +173,8 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
 
   if (extracting) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-neutral-500">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-600 border-t-transparent" />
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-muted">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         <p>{recipeId ? 'Loading recipe…' : 'Reading the recipe and writing it up…'}</p>
       </div>
     )
@@ -183,17 +183,14 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
   if (error && !recipe) {
     return (
       <div className="mx-auto max-w-md p-6 text-center">
-        <p className="mb-4 text-red-600">{error}</p>
+        <p className="mb-4 text-destructive-ink">{error}</p>
         {!recipeId && (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted">
             This can happen if a video has no captions/transcript, or a website blocks automated
             requests, so there's nothing to turn into a recipe.
           </p>
         )}
-        <button
-          onClick={() => navigate('/')}
-          className="mt-6 rounded-lg border border-neutral-300 px-4 py-2"
-        >
+        <button onClick={() => navigate('/')} className="mt-6 rounded-lg border border-line px-4 py-2 text-ink">
           Back home
         </button>
       </div>
@@ -206,7 +203,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
     <div className="mx-auto max-w-md p-4">
       <button
         onClick={() => navigate(recipeId ? `/recipes/${recipeId}` : '/')}
-        className="mb-3 text-sm text-neutral-500 underline"
+        className="mb-3 text-sm text-muted underline"
       >
         ← Cancel
       </button>
@@ -221,14 +218,14 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
       )}
 
       <input
-        className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-lg font-medium"
+        className="mb-3 w-full rounded-lg border border-line bg-card px-3 py-2 text-lg font-medium text-ink"
         placeholder="Recipe title"
         value={recipe.title}
         onChange={(e) => setRecipe({ ...recipe, title: e.target.value })}
       />
 
-      <h2 className="mb-1 font-semibold text-neutral-700">Ingredients</h2>
-      <p className="mb-2 text-xs text-neutral-500">
+      <h2 className="mb-1 font-semibold text-ink">Ingredients</h2>
+      <p className="mb-2 text-xs text-muted">
         {sourceUrl
           ? 'Imperial units (lb/oz/cup/tbsp/tsp) were converted to grams or ml. Scaling is available on the recipe page after saving.'
           : 'Tip: use metric units (g/ml) if you want scaling to work smoothly later.'}
@@ -239,7 +236,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
             <input
               type="number"
               inputMode="decimal"
-              className="w-16 rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+              className="w-16 rounded-lg border border-line bg-card px-2 py-1.5 text-sm text-ink"
               placeholder="qty"
               value={ing.quantity ?? ''}
               onChange={(e) =>
@@ -247,20 +244,20 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
               }
             />
             <input
-              className="w-16 rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+              className="w-16 rounded-lg border border-line bg-card px-2 py-1.5 text-sm text-ink"
               placeholder="unit"
               value={ing.unit ?? ''}
               onChange={(e) => updateIngredient(i, { unit: e.target.value || null })}
             />
             <input
-              className="flex-1 rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+              className="flex-1 rounded-lg border border-line bg-card px-2 py-1.5 text-sm text-ink"
               placeholder="ingredient"
               value={ing.item}
               onChange={(e) => updateIngredient(i, { item: e.target.value })}
             />
             <button
               onClick={() => removeIngredient(i)}
-              className="shrink-0 px-1.5 text-neutral-400"
+              className="shrink-0 px-1.5 text-muted"
               aria-label="Remove ingredient"
             >
               ✕
@@ -268,38 +265,33 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
           </div>
         ))}
       </div>
-      <button onClick={addIngredient} className="mb-4 text-sm text-orange-600 underline">
+      <button onClick={addIngredient} className="mb-4 text-sm text-primary-ink underline">
         + Add ingredient
       </button>
 
-      <h2 className="mb-1 font-semibold text-neutral-700">Steps</h2>
+      <h2 className="mb-1 font-semibold text-ink">Steps</h2>
       <textarea
-        className="mb-4 w-full rounded-lg border border-neutral-300 px-3 py-2"
+        className="mb-4 w-full rounded-lg border border-line bg-card px-3 py-2 text-ink"
         placeholder="One step per line"
         rows={Math.min(14, recipe.steps.length + 1)}
         value={recipe.steps.join('\n')}
         onChange={(e) => setRecipe({ ...recipe, steps: e.target.value.split('\n') })}
       />
 
-      <h2 className="mb-1 font-semibold text-neutral-700">Tags</h2>
-      {sourceUrl && (
-        <p className="mb-1 text-xs text-neutral-500">3 tags suggested automatically — edit as you like.</p>
-      )}
+      <h2 className="mb-1 font-semibold text-ink">Tags</h2>
+      {sourceUrl && <p className="mb-1 text-xs text-muted">3 tags suggested automatically — edit as you like.</p>}
       <div className="mb-2 flex flex-wrap gap-1.5">
         {recipe.tags.map((tag) => (
-          <span
-            key={tag}
-            className="flex items-center gap-1 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700"
-          >
+          <span key={tag} className="flex items-center gap-1 rounded-full bg-pill px-3 py-1 text-sm text-pill-ink">
             {tag}
-            <button onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`} className="text-neutral-500">
+            <button onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`} className="text-muted">
               ✕
             </button>
           </span>
         ))}
       </div>
       <input
-        className="mb-4 w-full rounded-lg border border-neutral-300 px-3 py-2"
+        className="mb-4 w-full rounded-lg border border-line bg-card px-3 py-2 text-ink"
         placeholder="Add a tag and press Enter"
         value={tagInput}
         onChange={(e) => setTagInput(e.target.value)}
@@ -312,12 +304,12 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         onBlur={addTag}
       />
 
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-3 text-sm text-destructive-ink">{error}</p>}
 
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full rounded-lg bg-orange-600 px-4 py-3 font-medium text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-primary px-4 py-3 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
       >
         {saving ? 'Saving…' : recipeId ? 'Save changes' : 'Save recipe'}
       </button>

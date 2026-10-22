@@ -34,12 +34,8 @@ export function ResetPassword() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-2 text-center text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-        Set a new password
-      </h1>
-      <p className="mb-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
-        Choose a new password for your account.
-      </p>
+      <h1 className="mb-2 text-center text-2xl font-semibold text-ink">Set a new password</h1>
+      <p className="mb-6 text-center text-sm text-muted">Choose a new password for your account.</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <PasswordInput required minLength={6} placeholder="New password" value={password} onChange={setPassword} />
         <PasswordInput
@@ -49,11 +45,11 @@ export function ResetPassword() {
           value={confirm}
           onChange={setConfirm}
         />
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-destructive-ink">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-orange-600 px-3 py-2 font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-primary px-3 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
         >
           {submitting ? 'Saving…' : 'Set new password'}
         </button>

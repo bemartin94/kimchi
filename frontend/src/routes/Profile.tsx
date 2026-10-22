@@ -64,7 +64,7 @@ export function Profile() {
   if (loading) {
     return (
       <Layout>
-        <p className="p-6 text-neutral-500 dark:text-neutral-400">Loading…</p>
+        <p className="p-6 text-muted">Loading…</p>
       </Layout>
     )
   }
@@ -72,7 +72,7 @@ export function Profile() {
   if (!profile) {
     return (
       <Layout>
-        <p className="p-6 text-neutral-500 dark:text-neutral-400">Could not load your profile.</p>
+        <p className="p-6 text-muted">Could not load your profile.</p>
       </Layout>
     )
   }
@@ -80,31 +80,29 @@ export function Profile() {
   return (
     <Layout>
       <div className="mx-auto max-w-md p-4">
-        <h1 className="mb-4 text-xl font-semibold text-neutral-900 dark:text-neutral-100">Your profile</h1>
+        <h1 className="mb-4 text-xl font-semibold text-ink">Your profile</h1>
 
-        <label className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-          Display name
-        </label>
+        <label className="mb-1 block text-sm font-medium text-ink">Display name</label>
         <div className="mb-4 flex gap-2">
           <input
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+            className="flex-1 rounded-lg border border-line bg-card px-3 py-2 text-ink"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
           />
           <button
             onClick={() => save({ display_name: displayName.trim() || null })}
             disabled={saving}
-            className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
           >
             Save
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg border border-neutral-200 bg-white px-3 py-3 dark:border-neutral-700 dark:bg-neutral-800">
+        <div className="mb-4 rounded-lg border border-line bg-card px-3 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Public profile</p>
-              <p className="max-w-[220px] text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm font-medium text-ink">Public profile</p>
+              <p className="max-w-[220px] text-xs text-muted">
                 {profile.is_public
                   ? 'Other signed-in users can browse all of your recipes.'
                   : "Your recipes are private. Others can only see ones you explicitly share via a link."}
@@ -114,34 +112,29 @@ export function Profile() {
               onClick={() => save({ is_public: !profile.is_public })}
               disabled={saving}
               className={`shrink-0 rounded-full px-3 py-1 text-sm disabled:opacity-50 ${
-                profile.is_public
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300'
+                profile.is_public ? 'bg-primary text-white' : 'bg-pill text-pill-ink'
               }`}
             >
               {profile.is_public ? 'Public' : 'Private'}
             </button>
           </div>
         </div>
-        {savedFeedback && <p className="mb-4 text-xs text-green-700 dark:text-green-400">Saved!</p>}
+        {savedFeedback && <p className="mb-4 text-xs text-success-ink">Saved!</p>}
 
-        <div className="rounded-lg border border-neutral-200 bg-white px-3 py-3 dark:border-neutral-700 dark:bg-neutral-800">
+        <div className="rounded-lg border border-line bg-card px-3 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Share your profile</p>
-              <p className="max-w-[220px] text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm font-medium text-ink">Share your profile</p>
+              <p className="max-w-[220px] text-xs text-muted">
                 Send this link directly to someone to show them your recipes.
                 {!profile.is_public && ' (Only works once your profile is set to Public above.)'}
               </p>
             </div>
-            <button
-              onClick={handleShareProfile}
-              className="shrink-0 rounded-full bg-neutral-200 px-3 py-1 text-sm text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
-            >
+            <button onClick={handleShareProfile} className="shrink-0 rounded-full bg-pill px-3 py-1 text-sm text-pill-ink">
               Share
             </button>
           </div>
-          {shareFeedback && <p className="mt-2 text-xs text-green-700 dark:text-green-400">{shareFeedback}</p>}
+          {shareFeedback && <p className="mt-2 text-xs text-success-ink">{shareFeedback}</p>}
         </div>
       </div>
     </Layout>

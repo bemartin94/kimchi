@@ -73,9 +73,7 @@ export function Auth() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-6 text-center text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-        Recetario
-      </h1>
+      <h1 className="mb-6 text-center text-2xl font-semibold text-ink">Recetario</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="email"
@@ -83,7 +81,7 @@ export function Auth() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+          className="rounded-lg border border-line bg-card px-3 py-2 text-ink"
         />
         <PasswordInput
           required
@@ -101,12 +99,12 @@ export function Auth() {
             onChange={setConfirmPassword}
           />
         )}
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {info && <p className="text-sm text-green-700 dark:text-green-400">{info}</p>}
+        {error && <p className="text-sm text-destructive-ink">{error}</p>}
+        {info && <p className="text-sm text-success-ink">{info}</p>}
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-orange-600 px-3 py-2 font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-primary px-3 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
         >
           {mode === 'sign-in' ? 'Sign in' : 'Sign up'}
         </button>
@@ -117,22 +115,22 @@ export function Auth() {
           type="button"
           onClick={handleForgotPassword}
           disabled={submitting}
-          className="mt-2 text-center text-sm text-neutral-500 underline dark:text-neutral-400"
+          className="mt-2 text-center text-sm text-primary-ink underline"
         >
           Forgot password?
         </button>
       )}
 
       <div className="my-4 flex items-center gap-3">
-        <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
-        <span className="text-xs text-neutral-400 dark:text-neutral-500">or</span>
-        <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+        <div className="h-px flex-1 bg-line" />
+        <span className="text-xs text-muted">or</span>
+        <div className="h-px flex-1 bg-line" />
       </div>
 
       <button
         type="button"
         onClick={handleGoogleSignIn}
-        className="flex items-center justify-center gap-2 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 dark:border-neutral-600 dark:text-neutral-200"
+        className="flex items-center justify-center gap-2 rounded-lg border border-line bg-card px-3 py-2 text-sm font-medium text-ink"
       >
         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
           <path
@@ -163,7 +161,7 @@ export function Auth() {
           setError(null)
           setInfo(null)
         }}
-        className="mt-4 text-sm text-neutral-500 underline dark:text-neutral-400"
+        className="mt-4 text-sm text-muted underline"
       >
         {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
       </button>

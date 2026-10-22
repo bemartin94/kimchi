@@ -11,9 +11,9 @@ export function ShareTarget() {
 
   if (!isValidHttpUrl(candidate)) {
     return (
-      <div className="mx-auto max-w-md p-6 text-center text-neutral-600">
+      <div className="mx-auto max-w-md p-6 text-center text-muted">
         <p>Couldn't find a link in what was shared.</p>
-        <p className="mt-2 text-sm text-neutral-400">Received: {candidate || '(nothing)'}</p>
+        <p className="mt-2 text-sm text-muted">Received: {candidate || '(nothing)'}</p>
       </div>
     )
   }

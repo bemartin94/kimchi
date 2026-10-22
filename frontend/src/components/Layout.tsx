@@ -7,29 +7,25 @@ export function Layout({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme()
 
   return (
-    <div className="min-h-dvh bg-neutral-50 dark:bg-neutral-900">
-      <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900">
-        <Link to="/" className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+    <div className="min-h-dvh bg-app-bg">
+      <header className="flex items-center justify-between border-b border-line bg-card px-4 py-3">
+        <Link to="/" className="text-lg font-semibold text-ink">
           Recetario
         </Link>
         <div className="flex items-center gap-3">
-          <button
-            onClick={toggle}
-            aria-label="Toggle dark mode"
-            className="text-sm text-neutral-600 dark:text-neutral-300"
-          >
+          <button onClick={toggle} aria-label="Toggle dark mode" className="text-sm text-muted">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <Link to="/profile" className="text-sm text-neutral-600 underline dark:text-neutral-300">
+          <Link to="/profile" className="text-sm text-muted underline">
             Profile
           </Link>
-          <Link to="/add" className="rounded-lg bg-orange-600 px-3 py-1.5 text-sm font-medium text-white">
+          <Link
+            to="/add"
+            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover"
+          >
             + Add
           </Link>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="text-sm text-neutral-500 underline dark:text-neutral-400"
-          >
+          <button onClick={() => supabase.auth.signOut()} className="text-sm text-muted underline">
             Sign out
           </button>
         </div>
