@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
@@ -8,6 +9,7 @@ export function Auth() {
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -18,6 +20,12 @@ export function Auth() {
     e.preventDefault()
     setError(null)
     setInfo(null)
+
+    if (mode === 'sign-up' && password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
     setSubmitting(true)
     try {
       if (mode === 'sign-in') {
@@ -77,15 +85,22 @@ export function Auth() {
           onChange={(e) => setEmail(e.target.value)}
           className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
         />
-        <input
-          type="password"
+        <PasswordInput
           required
           minLength={6}
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+          onChange={setPassword}
         />
+        {mode === 'sign-up' && (
+          <PasswordInput
+            required
+            minLength={6}
+            placeholder="Confirm password"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+          />
+        )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         {info && <p className="text-sm text-green-700 dark:text-green-400">{info}</p>}
         <button
@@ -142,7 +157,12 @@ export function Auth() {
 
       <button
         type="button"
-        onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')}
+        onClick={() => {
+          setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')
+          setConfirmPassword('')
+          setError(null)
+          setInfo(null)
+        }}
         className="mt-4 text-sm text-neutral-500 underline dark:text-neutral-400"
       >
         {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PasswordInput } from '../components/PasswordInput'
 import { supabase } from '../lib/supabaseClient'
 
 /**
@@ -40,23 +41,13 @@ export function ResetPassword() {
         Choose a new password for your account.
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="password"
-          required
-          minLength={6}
-          placeholder="New password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
-        />
-        <input
-          type="password"
+        <PasswordInput required minLength={6} placeholder="New password" value={password} onChange={setPassword} />
+        <PasswordInput
           required
           minLength={6}
           placeholder="Confirm new password"
           value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100"
+          onChange={setConfirm}
         />
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <button
