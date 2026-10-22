@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/icon-192.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- interactive-widget=resizes-content: without this, Android Chrome overlays
+         the on-screen keyboard instead of shrinking the viewport, which makes
+         `position: fixed` elements (like the search bar) and `100vh`-based
+         layouts miscalculate and leave a gap that needs scrolling to clear. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#ea580c" />
     <title>Recetario</title>
   </head>

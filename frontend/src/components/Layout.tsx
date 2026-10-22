@@ -7,7 +7,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme()
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+    <div className="min-h-dvh bg-neutral-50 dark:bg-neutral-900">
       <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900">
         <Link to="/" className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           Recetario

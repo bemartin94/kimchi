@@ -76,12 +76,6 @@ export function RecipeDetail() {
     }
   }
 
-  async function handleStopSharing() {
-    if (!recipe) return
-    const { error } = await supabase.from('recipes').update({ share_token: null }).eq('id', id)
-    if (!error) setRecipe((r) => (r ? { ...r, share_token: null } : r))
-  }
-
   async function handleDelete() {
     if (!recipe) return
     if (!confirm('Delete this recipe?')) return
@@ -123,14 +117,6 @@ export function RecipeDetail() {
           )}
         </div>
         {shareFeedback && <p className="mb-2 text-xs text-green-700 dark:text-green-400">{shareFeedback}</p>}
-        {isOwner && recipe.share_token && (
-          <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="truncate">{publicUrlFor(recipe.share_token)}</span>
-            <button onClick={handleStopSharing} className="shrink-0 text-red-600 underline dark:text-red-400">
-              Stop sharing
-            </button>
-          </div>
-        )}
         {recipe.source_url && (
           <a
             href={recipe.source_url}

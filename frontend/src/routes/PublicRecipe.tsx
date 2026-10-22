@@ -49,7 +49,7 @@ export function PublicRecipe() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-dvh bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white px-4 py-3">
         <span className="text-lg font-semibold text-neutral-900">Recetario</span>
         <span className="ml-2 text-xs text-neutral-400">shared recipe</span>
