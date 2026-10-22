@@ -9,6 +9,7 @@ import { Profile } from './routes/Profile'
 import { PublicRecipe } from './routes/PublicRecipe'
 import { RecipeDetail } from './routes/RecipeDetail'
 import { RecipeList } from './routes/RecipeList'
+import { ResetPassword } from './routes/ResetPassword'
 import { ShareTarget } from './routes/ShareTarget'
 import { UserRecipes } from './routes/UserRecipes'
 
@@ -18,6 +19,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/r/:token" element={<PublicRecipe />} />
           <Route
             path="/"
