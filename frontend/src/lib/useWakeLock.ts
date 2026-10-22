@@ -4,17 +4,20 @@ import { useEffect, useRef, useState } from 'react'
 export function useWakeLock() {
   const supported = typeof navigator !== 'undefined' && 'wakeLock' in navigator
   const [active, setActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const sentinelRef = useRef<WakeLockSentinel | null>(null)
 
   async function enable() {
     if (!supported) return
+    setError(null)
     try {
       const sentinel = await navigator.wakeLock.request('screen')
       sentinelRef.current = sentinel
       setActive(true)
       sentinel.addEventListener('release', () => setActive(false))
-    } catch {
+    } catch (err) {
       setActive(false)
+      setError(err instanceof Error ? `${err.name}: ${err.message}` : 'Failed to enable.')
     }
   }
 
@@ -40,5 +43,5 @@ export function useWakeLock() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active])
 
-  return { supported, active, enable, disable }
+  return { supported, active, error, enable, disable }
 }

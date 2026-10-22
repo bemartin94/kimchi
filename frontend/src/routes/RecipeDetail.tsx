@@ -124,22 +124,25 @@ export function RecipeDetail() {
           </a>
         )}
 
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
-          <div>
-            <p className="text-sm font-medium text-neutral-800">Cooking Mode</p>
-            <p className="text-xs text-neutral-500">
-              {wakeLock.supported ? 'Keeps your screen from locking' : 'Not supported in this browser'}
-            </p>
+        <div className="mb-4 rounded-lg border border-neutral-200 bg-white px-3 py-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-neutral-800">Cooking Mode</p>
+              <p className="text-xs text-neutral-500">
+                {wakeLock.supported ? 'Keeps your screen from locking' : 'Not supported in this browser'}
+              </p>
+            </div>
+            <button
+              disabled={!wakeLock.supported}
+              onClick={() => (wakeLock.active ? wakeLock.disable() : wakeLock.enable())}
+              className={`rounded-full px-3 py-1 text-sm disabled:opacity-40 ${
+                wakeLock.active ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
+              }`}
+            >
+              {wakeLock.active ? 'On' : 'Off'}
+            </button>
           </div>
-          <button
-            disabled={!wakeLock.supported}
-            onClick={() => (wakeLock.active ? wakeLock.disable() : wakeLock.enable())}
-            className={`rounded-full px-3 py-1 text-sm disabled:opacity-40 ${
-              wakeLock.active ? 'bg-orange-600 text-white' : 'bg-neutral-200 text-neutral-700'
-            }`}
-          >
-            {wakeLock.active ? 'On' : 'Off'}
-          </button>
+          {wakeLock.error && <p className="mt-2 text-xs text-red-600">{wakeLock.error}</p>}
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-2">
