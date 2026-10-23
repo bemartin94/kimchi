@@ -281,7 +281,24 @@ function normalizeIngredient(raw: RawIngredient): RawIngredient {
 
 // ---------- AI structuring (title/tags/ingredients/steps only — no unit math) ----------
 
-async function structureRecipe(sourceText: string, existingTags: string[]) {
+interface StructuredRecipe {
+  title: string
+  tags: string[]
+  ingredients: RawIngredient[]
+  steps: string[]
+}
+
+/** Retries once if ingredients came back but steps didn't — the model occasionally
+ *  drops the steps array on a given attempt even though the source clearly has them. */
+async function structureRecipe(sourceText: string, existingTags: string[]): Promise<StructuredRecipe> {
+  const first = await structureRecipeOnce(sourceText, existingTags)
+  if (first.steps.length > 0 || first.ingredients.length === 0) return first
+
+  const retry = await structureRecipeOnce(sourceText, existingTags)
+  return retry.steps.length > 0 ? retry : first
+}
+
+async function structureRecipeOnce(sourceText: string, existingTags: string[]): Promise<StructuredRecipe> {
   const apiKey = Deno.env.get('GROQ_API_KEY')
   if (!apiKey) throw new Error('GROQ_API_KEY is not configured.')
 
