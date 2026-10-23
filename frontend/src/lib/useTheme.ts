@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 
 type Theme = 'light' | 'dark'
 
+// Mirrors --app-bg in index.css, so the browser/PWA chrome (status bar,
+// Android gesture nav bar) matches the page instead of defaulting to white.
+const APP_BG: Record<Theme, string> = { light: '#faf6f1', dark: '#1a1412' }
+
 function getInitialTheme(): Theme {
   try {
     const stored = localStorage.getItem('theme')
@@ -17,6 +21,7 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', APP_BG[theme])
     try {
       localStorage.setItem('theme', theme)
     } catch {

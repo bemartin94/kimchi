@@ -58,8 +58,8 @@ export default defineConfig(({ mode }) => {
           description: 'Save recipes from YouTube videos, organized by category.',
           start_url: '/',
           display: 'standalone',
-          background_color: '#ffffff',
-          theme_color: '#ea580c',
+          background_color: '#faf6f1',
+          theme_color: '#faf6f1',
           icons: [
             { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
             { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
