@@ -140,7 +140,10 @@ export function RecipeDetail() {
   return (
     <Layout>
       <div className="mx-auto max-w-md p-4">
-        <Link to="/" className="mb-2 inline-block text-sm font-semibold text-primary-ink">
+        <Link
+          to="/"
+          className="mb-3 inline-flex items-center gap-1 rounded-full bg-pill px-3 py-1.5 text-sm font-semibold text-pill-ink"
+        >
           ‹ All recipes
         </Link>
         {recipe.thumbnail_url && (
