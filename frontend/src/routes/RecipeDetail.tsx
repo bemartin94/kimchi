@@ -304,11 +304,17 @@ export function RecipeDetail() {
         {cookFeedback && <p className="mb-4 text-sm text-success-ink">{cookFeedback}</p>}
 
         {isOwner && !confirmingDelete && (
-          <div className="flex gap-4">
-            <Link to={`/recipes/${recipe.id}/edit`} className="text-sm text-primary-ink underline">
+          <div className="flex gap-3">
+            <Link
+              to={`/recipes/${recipe.id}/edit`}
+              className="flex-1 rounded-lg border border-line py-2 text-center text-sm font-semibold text-ink"
+            >
               Edit recipe
             </Link>
-            <button onClick={() => setConfirmingDelete(true)} className="text-sm text-destructive-ink underline">
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="flex-1 rounded-lg border border-destructive-ink py-2 text-sm font-semibold text-destructive-ink"
+            >
               Delete recipe
             </button>
           </div>
