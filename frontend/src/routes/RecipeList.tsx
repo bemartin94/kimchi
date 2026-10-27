@@ -5,6 +5,27 @@ import { supabase } from '../lib/supabaseClient'
 import { tagsOf } from '../lib/tags'
 import type { Recipe } from '../types'
 
+function RecipeThumbnail({ url }: { url: string | null }) {
+  const [failed, setFailed] = useState(false)
+
+  if (!url || failed) {
+    return (
+      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-pill text-2xl">
+        🍽️
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={url}
+      alt=""
+      onError={() => setFailed(true)}
+      className="h-16 w-16 shrink-0 rounded-md bg-pill object-cover"
+    />
+  )
+}
+
 export function RecipeList() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [activeTag, setActiveTag] = useState<string | 'all'>('all')
@@ -115,17 +136,7 @@ export function RecipeList() {
               to={`/recipes/${r.id}`}
               className="flex items-center gap-3 overflow-hidden rounded-lg border border-line bg-card p-2"
             >
-              {r.thumbnail_url ? (
-                <img
-                  src={r.thumbnail_url}
-                  alt=""
-                  className="h-16 w-16 shrink-0 rounded-md object-cover"
-                />
-              ) : (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-pill text-2xl">
-                  🍽️
-                </div>
-              )}
+              <RecipeThumbnail url={r.thumbnail_url} />
               <p className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{r.title}</p>
             </Link>
           ))}
