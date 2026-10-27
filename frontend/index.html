@@ -19,6 +19,19 @@
     />
     <meta name="theme-color" content="#1a1412" />
     <title>mis recetas</title>
+    <!-- Vercel's auto-generated project domain (kimchi-<team>.vercel.app) and
+         the real canonical domain serve the same build but are different
+         origins -- separate localStorage, separate installed-PWA scope. A
+         vercel.json host redirect didn't take effect (Vercel appears to not
+         let you redirect away its own auto-generated subdomain), so this
+         bounces client-side instead, before anything else runs. -->
+    <script>
+      (function () {
+        if (location.hostname === 'kimchi-bemartin94s-projects.vercel.app') {
+          location.replace('https://kimchi-liart.vercel.app' + location.pathname + location.search + location.hash)
+        }
+      })()
+    </script>
     <!-- Applies the stored dark/light preference before React mounts (and
          before first paint), so pages that don't use Layout/useTheme -- like
          Auth, which you see before signing in -- aren't stuck in light mode
