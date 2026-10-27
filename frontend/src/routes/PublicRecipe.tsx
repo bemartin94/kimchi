@@ -23,7 +23,17 @@ export function PublicRecipe() {
   const [loading, setLoading] = useState(true)
   const [scale, setScale] = useState(1)
   const [customScale, setCustomScale] = useState('')
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set())
   const wakeLock = useWakeLock()
+
+  function toggleIngredient(i: number) {
+    setCheckedIngredients((prev) => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i)
+      else next.add(i)
+      return next
+    })
+  }
 
   useEffect(() => {
     supabase
@@ -125,17 +135,33 @@ export function PublicRecipe() {
         <h2 className="mb-1 font-semibold text-ink">
           Ingredients {scale !== 1 && <span className="font-normal text-muted">({scale}x)</span>}
         </h2>
-        <ul className="mb-4 list-disc pl-5 text-ink">
-          {recipe.ingredients.map((ing, i) => (
-            <li key={i}>{typeof ing === 'string' ? ing : formatIngredient(ing, scale)}</li>
-          ))}
+        <ul className="mb-4 flex flex-col gap-1.5">
+          {recipe.ingredients.map((ing, i) => {
+            const checked = checkedIngredients.has(i)
+            return (
+              <li key={i}>
+                <label className="flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleIngredient(i)}
+                    className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-primary"
+                  />
+                  <span className={checked ? 'text-muted line-through' : 'text-ink'}>
+                    {typeof ing === 'string' ? ing : formatIngredient(ing, scale)}
+                  </span>
+                </label>
+              </li>
+            )
+          })}
         </ul>
 
         <h2 className="mb-1 font-semibold text-ink">Steps</h2>
-        <ol className="mb-6 list-decimal pl-5 text-ink">
+        <ol className="mb-6 flex flex-col gap-2">
           {recipe.steps.map((step, i) => (
-            <li key={i} className="mb-1">
-              {step}
+            <li key={i} className="flex gap-3">
+              <span className={`font-bold ${i % 2 === 0 ? 'text-primary-ink' : 'text-emphasis'}`}>{i + 1}.</span>
+              <span className="text-ink">{step}</span>
             </li>
           ))}
         </ol>

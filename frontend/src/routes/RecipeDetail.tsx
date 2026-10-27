@@ -35,6 +35,7 @@ export function RecipeDetail() {
   const [cooking, setCooking] = useState(false)
   const [step, setStep] = useState(0)
   const [cookFeedback, setCookFeedback] = useState<string | null>(null)
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set())
   const wakeLock = useWakeLock()
 
   useEffect(() => {
@@ -96,6 +97,15 @@ export function RecipeDetail() {
       setStep(0)
       wakeLock.enable()
     }
+  }
+
+  function toggleIngredient(i: number) {
+    setCheckedIngredients((prev) => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i)
+      else next.add(i)
+      return next
+    })
   }
 
   function nextStep() {
@@ -229,10 +239,25 @@ export function RecipeDetail() {
         <h2 className="mb-1 font-semibold text-ink">
           Ingredients {scale !== 1 && <span className="font-normal text-muted">({scale}x)</span>}
         </h2>
-        <ul className="mb-4 list-disc pl-5 text-ink">
-          {recipe.ingredients.map((ing, i) => (
-            <li key={i}>{typeof ing === 'string' ? ing : formatIngredient(ing, scale)}</li>
-          ))}
+        <ul className="mb-4 flex flex-col gap-1.5">
+          {recipe.ingredients.map((ing, i) => {
+            const checked = checkedIngredients.has(i)
+            return (
+              <li key={i}>
+                <label className="flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleIngredient(i)}
+                    className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-primary"
+                  />
+                  <span className={checked ? 'text-muted line-through' : 'text-ink'}>
+                    {typeof ing === 'string' ? ing : formatIngredient(ing, scale)}
+                  </span>
+                </label>
+              </li>
+            )
+          })}
         </ul>
 
         <h2 className="mb-1 font-semibold text-ink">Method</h2>
@@ -265,10 +290,13 @@ export function RecipeDetail() {
             </div>
           </div>
         ) : (
-          <ol className="mb-6 list-decimal pl-5 text-ink">
+          <ol className="mb-6 flex flex-col gap-2">
             {recipe.steps.map((s, i) => (
-              <li key={i} className="mb-1">
-                {s}
+              <li key={i} className="flex gap-3">
+                <span className={`font-bold ${i % 2 === 0 ? 'text-primary-ink' : 'text-emphasis'}`}>
+                  {i + 1}.
+                </span>
+                <span className="text-ink">{s}</span>
               </li>
             ))}
           </ol>
