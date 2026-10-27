@@ -10,6 +10,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#faf6f1" />
     <title>Recetario</title>
+    <!-- Applies the stored dark/light preference before React mounts (and
+         before first paint), so pages that don't use Layout/useTheme -- like
+         Auth, which you see before signing in -- aren't stuck in light mode
+         until some later page happens to call useTheme(). -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme')
+          var dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) {
+            document.documentElement.classList.add('dark')
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#1a1412')
+          }
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
