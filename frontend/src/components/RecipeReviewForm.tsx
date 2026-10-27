@@ -30,9 +30,9 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
   const [existingTags, setExistingTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
-  const [editingPhoto, setEditingPhoto] = useState(false)
-  const [photoUrlInput, setPhotoUrlInput] = useState('')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const startedRef = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     // Guards against React StrictMode's dev-only double-invoke, which would
@@ -119,16 +119,31 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
     setTagInput('')
   }
 
-  function openPhotoEditor() {
-    if (!recipe) return
-    setPhotoUrlInput(recipe.thumbnailUrl ?? '')
-    setEditingPhoto(true)
-  }
+  async function handlePhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow picking the same file again later
+    if (!file || !recipe) return
 
-  function savePhotoUrl() {
-    if (!recipe) return
-    setRecipe({ ...recipe, thumbnailUrl: photoUrlInput.trim() || null })
-    setEditingPhoto(false)
+    setUploadingPhoto(true)
+    setError(null)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in.')
+
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('recipe-images').upload(path, file)
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('recipe-images').getPublicUrl(path)
+      setRecipe((r) => (r ? { ...r, thumbnailUrl: data.publicUrl } : r))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Photo upload failed.')
+    } finally {
+      setUploadingPhoto(false)
+    }
   }
 
   function toggleTag(name: string) {
@@ -241,6 +256,14 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         ← Cancel
       </button>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handlePhotoFile}
+        className="hidden"
+      />
+
       {recipe.thumbnailUrl ? (
         <div className="relative mb-4">
           <img
@@ -250,49 +273,21 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <button
-            onClick={openPhotoEditor}
-            className="absolute bottom-2 right-2 rounded-full bg-card/90 px-3 py-1.5 text-xs font-medium text-ink shadow"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingPhoto}
+            className="absolute bottom-2 right-2 rounded-full bg-card/90 px-3 py-1.5 text-xs font-medium text-ink shadow disabled:opacity-60"
           >
-            Change photo
+            {uploadingPhoto ? 'Uploading…' : 'Change photo'}
           </button>
         </div>
       ) : (
         <button
-          onClick={openPhotoEditor}
-          className="mb-4 flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-line text-sm text-muted"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadingPhoto}
+          className="mb-4 flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-line text-sm text-muted disabled:opacity-60"
         >
-          + Add photo URL
+          {uploadingPhoto ? 'Uploading…' : '+ Add photo'}
         </button>
-      )}
-
-      {editingPhoto && (
-        <div className="mb-4 flex gap-1.5">
-          <input
-            autoFocus
-            className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink"
-            placeholder="Image URL"
-            value={photoUrlInput}
-            onChange={(e) => setPhotoUrlInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                savePhotoUrl()
-              }
-            }}
-          />
-          <button
-            onClick={savePhotoUrl}
-            className="shrink-0 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-primary-hover"
-          >
-            Save
-          </button>
-          <button
-            onClick={() => setEditingPhoto(false)}
-            className="shrink-0 rounded-lg border border-line px-3 text-sm text-muted"
-          >
-            Cancel
-          </button>
-        </div>
       )}
 
       <input
