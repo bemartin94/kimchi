@@ -4,6 +4,14 @@ import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
+// Vercel also serves the app from an auto-generated project domain
+// (kimchi-<team>.vercel.app) in addition to the real production domain. If a
+// user happens to open that one, window.location.origin would send OAuth/
+// password-reset redirects back to it instead — breaking out of the installed
+// PWA's scope (it opens as a plain browser tab) and hitting that domain's own
+// deployment-protection rules. Always redirect to the canonical domain in prod.
+const SITE_URL = import.meta.env.DEV ? window.location.origin : 'https://kimchi-liart.vercel.app'
+
 export function Auth() {
   const { session } = useAuth()
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
@@ -52,7 +60,7 @@ export function Auth() {
     }
     setSubmitting(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${SITE_URL}/reset-password`,
     })
     setSubmitting(false)
     if (error) {
@@ -66,7 +74,7 @@ export function Auth() {
     setError(null)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: SITE_URL },
     })
     if (error) setError(error.message)
   }
