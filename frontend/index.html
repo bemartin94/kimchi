@@ -17,7 +17,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#faf6f1" />
+    <meta name="theme-color" content="#1a1412" />
     <title>mis recetas</title>
     <!-- Applies the stored dark/light preference before React mounts (and
          before first paint), so pages that don't use Layout/useTheme -- like
@@ -28,10 +28,8 @@
         try {
           var stored = localStorage.getItem('theme')
           var dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          if (dark) {
-            document.documentElement.classList.add('dark')
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#1a1412')
-          }
+          document.documentElement.classList.toggle('dark', dark)
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#1a1412' : '#faf6f1')
         } catch (e) {}
       })()
     </script>

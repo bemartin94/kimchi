@@ -58,8 +58,13 @@ export default defineConfig(({ mode }) => {
           description: 'Save recipes from YouTube videos, organized by category.',
           start_url: '/',
           display: 'standalone',
-          background_color: '#faf6f1',
-          theme_color: '#faf6f1',
+          // Installed PWAs (WebAPK) appear to use this static value as the
+          // navigation-bar fill rather than the live, JS-updated meta tag --
+          // same install-time-snapshot behavior as the icons. Dark since
+          // that's the primary mode in practice; light-mode users would see
+          // this reserved strip mismatched until Android next re-syncs it.
+          background_color: '#1a1412',
+          theme_color: '#1a1412',
           icons: [
             { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
             { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
