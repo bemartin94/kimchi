@@ -5,10 +5,29 @@ import { downloadCsv, toCsv } from '../lib/csv'
 import { formatIngredient } from '../lib/scale'
 import { supabase } from '../lib/supabaseClient'
 import { tagsOf } from '../lib/tags'
+import { useTheme } from '../lib/useTheme'
 import type { Profile as ProfileType, Recipe } from '../types'
+
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77" />
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  )
+}
 
 export function Profile() {
   const navigate = useNavigate()
+  const { theme, toggle: toggleTheme } = useTheme()
   const [profile, setProfile] = useState<ProfileType | null>(null)
   const [recipeCount, setRecipeCount] = useState(0)
   const [displayName, setDisplayName] = useState('')
@@ -142,6 +161,17 @@ export function Profile() {
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
           >
             Save
+          </button>
+        </div>
+
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-line bg-card px-3 py-3">
+          <p className="text-sm font-medium text-ink">Dark mode</p>
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle dark mode"
+            className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-line bg-card text-ink"
+          >
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
         </div>
 
