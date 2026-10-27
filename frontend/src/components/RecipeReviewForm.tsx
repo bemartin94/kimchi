@@ -29,6 +29,8 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
   const [existingTags, setExistingTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingPhoto, setEditingPhoto] = useState(false)
+  const [photoUrlInput, setPhotoUrlInput] = useState('')
   const startedRef = useRef(false)
 
   useEffect(() => {
@@ -113,6 +115,18 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
       setRecipe({ ...recipe, tags: [...recipe.tags, canonical] })
     }
     setTagInput('')
+  }
+
+  function openPhotoEditor() {
+    if (!recipe) return
+    setPhotoUrlInput(recipe.thumbnailUrl ?? '')
+    setEditingPhoto(true)
+  }
+
+  function savePhotoUrl() {
+    if (!recipe) return
+    setRecipe({ ...recipe, thumbnailUrl: photoUrlInput.trim() || null })
+    setEditingPhoto(false)
   }
 
   function toggleTag(name: string) {
@@ -223,13 +237,58 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         ← Cancel
       </button>
 
-      {recipe.thumbnailUrl && (
-        <img
-          src={recipe.thumbnailUrl}
-          alt=""
-          className="mb-4 w-full rounded-lg object-cover"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
-        />
+      {recipe.thumbnailUrl ? (
+        <div className="relative mb-4">
+          <img
+            src={recipe.thumbnailUrl}
+            alt=""
+            className="w-full rounded-lg object-cover"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <button
+            onClick={openPhotoEditor}
+            className="absolute bottom-2 right-2 rounded-full bg-card/90 px-3 py-1.5 text-xs font-medium text-ink shadow"
+          >
+            Change photo
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={openPhotoEditor}
+          className="mb-4 flex aspect-video w-full items-center justify-center rounded-lg border border-dashed border-line text-sm text-muted"
+        >
+          + Add photo URL
+        </button>
+      )}
+
+      {editingPhoto && (
+        <div className="mb-4 flex gap-1.5">
+          <input
+            autoFocus
+            className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink"
+            placeholder="Image URL"
+            value={photoUrlInput}
+            onChange={(e) => setPhotoUrlInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                savePhotoUrl()
+              }
+            }}
+          />
+          <button
+            onClick={savePhotoUrl}
+            className="shrink-0 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-primary-hover"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => setEditingPhoto(false)}
+            className="shrink-0 rounded-lg border border-line px-3 text-sm text-muted"
+          >
+            Cancel
+          </button>
+        </div>
       )}
 
       <input
@@ -265,7 +324,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
               onChange={(e) => updateIngredient(i, { unit: e.target.value || null })}
             />
             <input
-              className="flex-1 rounded-lg border border-line bg-card px-2 py-1.5 text-sm text-ink"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-card px-2 py-1.5 text-sm text-ink"
               placeholder="ingredient"
               value={ing.item}
               onChange={(e) => updateIngredient(i, { item: e.target.value })}
