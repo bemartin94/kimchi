@@ -51,7 +51,7 @@ export function PublicRecipe() {
   return (
     <div className="min-h-dvh bg-app-bg">
       <header className="border-b border-line bg-card px-4 py-3">
-        <span className="text-lg font-semibold text-ink">Recetario</span>
+        <span className="text-lg font-semibold text-ink">mis recetas</span>
         <span className="ml-2 text-xs text-muted">shared recipe</span>
       </header>
 
@@ -143,7 +143,7 @@ export function PublicRecipe() {
         <p className="text-center text-sm text-muted">
           Saved with{' '}
           <Link to="/" className="text-primary-ink underline">
-            Recetario
+            mis recetas
           </Link>
         </p>
       </div>

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { useTheme } from '../lib/useTheme'
 import { BottomNav } from './BottomNav'
 
@@ -25,10 +24,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-app-bg">
-      <header className="flex items-center justify-between border-b border-line bg-card px-4 py-3">
-        <Link to="/" className="text-lg font-semibold text-ink">
-          Recetario
-        </Link>
+      <header className="flex items-center justify-end border-b border-line bg-card px-4 py-3">
         <button
           onClick={toggle}
           aria-label="Toggle dark mode"

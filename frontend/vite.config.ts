@@ -53,8 +53,8 @@ export default defineConfig(({ mode }) => {
           ],
         },
         manifest: {
-          name: 'Recetario',
-          short_name: 'Recetario',
+          name: 'mis recetas',
+          short_name: 'mis recetas',
           description: 'Save recipes from YouTube videos, organized by category.',
           start_url: '/',
           display: 'standalone',

@@ -60,7 +60,7 @@ export function Profile() {
     const url = `${window.location.origin}/users/${profile.id}`
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'My recipes on Recetario', url })
+        await navigator.share({ title: 'My recipes on mis recetas', url })
       } catch {
         // user cancelled — nothing to do
       }
