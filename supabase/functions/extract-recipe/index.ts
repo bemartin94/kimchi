@@ -109,6 +109,7 @@ async function pollJob(jobId: string, apiKey: string): Promise<string> {
 interface SourceContent {
   text: string
   thumbnailUrl: string | null
+  author: string | null
 }
 
 function firstImageUrl(image: unknown): string | null {
@@ -117,6 +118,18 @@ function firstImageUrl(image: unknown): string | null {
   if (Array.isArray(image)) return firstImageUrl(image[0])
   if (typeof image === 'object' && image !== null && 'url' in image) {
     return typeof (image as { url: unknown }).url === 'string' ? (image as { url: string }).url : null
+  }
+  return null
+}
+
+/** JSON-LD author can be a string, a {name} object, or an array of either. */
+function firstAuthorName(author: unknown): string | null {
+  if (!author) return null
+  if (typeof author === 'string') return author.trim() || null
+  if (Array.isArray(author)) return firstAuthorName(author[0])
+  if (typeof author === 'object' && author !== null && 'name' in author) {
+    const name = (author as { name: unknown }).name
+    return typeof name === 'string' ? name.trim() || null : null
   }
   return null
 }
@@ -196,7 +209,7 @@ async function fetchWebpageContent(url: string): Promise<SourceContent> {
           `Title: ${String(recipeNode.name ?? '')}\n\n` +
           `Ingredients:\n${ingredients.join('\n')}\n\n` +
           `Instructions:\n${instructions.join('\n')}`
-        return { text, thumbnailUrl: firstImageUrl(recipeNode.image) }
+        return { text, thumbnailUrl: firstImageUrl(recipeNode.image), author: firstAuthorName(recipeNode.author) }
       }
     } catch {
       // not valid/relevant JSON-LD — try the next block
@@ -205,7 +218,14 @@ async function fetchWebpageContent(url: string): Promise<SourceContent> {
 
   // No structured recipe data found — fall back to the page's visible text.
   const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
-  return { text: stripHtml(html).slice(0, 20000), thumbnailUrl: ogImageMatch?.[1] ?? null }
+  const authorMetaMatch =
+    html.match(/<meta[^>]*name=["']author["'][^>]*content=["']([^"']+)["']/i) ??
+    html.match(/<meta[^>]*property=["']article:author["'][^>]*content=["']([^"']+)["']/i)
+  return {
+    text: stripHtml(html).slice(0, 20000),
+    thumbnailUrl: ogImageMatch?.[1] ?? null,
+    author: authorMetaMatch?.[1]?.trim() || null,
+  }
 }
 
 // ---------- Unit conversion (deterministic — the AI never does the math) ----------
@@ -373,6 +393,18 @@ function youTubeThumbnail(videoId: string): string {
   return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
 }
 
+/** YouTube's public oEmbed endpoint — no API key needed, gives the channel name. */
+async function fetchYouTubeAuthor(videoUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`)
+    if (!res.ok) return null
+    const data = (await res.json()) as { author_name?: string }
+    return typeof data.author_name === 'string' ? data.author_name.trim() || null : null
+  } catch {
+    return null
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -394,10 +426,12 @@ Deno.serve(async (req) => {
 
     let sourceText: string
     let thumbnailUrl: string | null
+    let author: string | null
 
     if (videoId) {
       sourceText = await fetchTranscript(url)
       thumbnailUrl = youTubeThumbnail(videoId)
+      author = await fetchYouTubeAuthor(url)
     } else {
       if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
         return jsonResponse({ error: 'Only http(s) URLs are supported.' }, 400)
@@ -405,10 +439,11 @@ Deno.serve(async (req) => {
       const content = await fetchWebpageContent(url)
       sourceText = content.text
       thumbnailUrl = content.thumbnailUrl
+      author = content.author
     }
 
     const recipe = await structureRecipe(sourceText, tags)
-    return jsonResponse({ ...recipe, thumbnailUrl })
+    return jsonResponse({ ...recipe, thumbnailUrl, author })
   } catch (err) {
     if (err instanceof TranscriptUnavailableError) {
       return jsonResponse({ error: err.message }, 422)

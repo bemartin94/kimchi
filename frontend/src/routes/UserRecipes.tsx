@@ -51,6 +51,7 @@ export function UserRecipes() {
         source_url: recipe.source_url,
         title: recipe.title,
         thumbnail_url: recipe.thumbnail_url,
+        author: recipe.author,
         ingredients: recipe.ingredients,
         steps: recipe.steps,
       })

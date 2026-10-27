@@ -11,6 +11,7 @@ const BLANK_RECIPE: ExtractedRecipe = {
   ingredients: [{ quantity: null, unit: null, item: '' }],
   steps: [''],
   thumbnailUrl: null,
+  author: null,
 }
 
 interface Props {
@@ -73,6 +74,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
                   ingredients: existingRecipe.ingredients,
                   steps: existingRecipe.steps,
                   thumbnailUrl: existingRecipe.thumbnail_url,
+                  author: existingRecipe.author,
                 })
                 setExtracting(false)
               })
@@ -161,6 +163,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
           .update({
             title: recipe.title,
             thumbnail_url: recipe.thumbnailUrl,
+            author: recipe.author,
             ingredients,
             steps,
           })
@@ -178,6 +181,7 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
           source_url: sourceUrl ?? null,
           title: recipe.title,
           thumbnail_url: recipe.thumbnailUrl,
+          author: recipe.author,
           ingredients,
           steps,
         })
@@ -296,6 +300,13 @@ export function RecipeReviewForm({ sourceUrl, recipeId }: Props) {
         placeholder="Recipe title"
         value={recipe.title}
         onChange={(e) => setRecipe({ ...recipe, title: e.target.value })}
+      />
+
+      <input
+        className="mb-4 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink"
+        placeholder="Author (optional)"
+        value={recipe.author ?? ''}
+        onChange={(e) => setRecipe({ ...recipe, author: e.target.value || null })}
       />
 
       <h2 className="mb-1 font-semibold text-ink">Ingredients</h2>

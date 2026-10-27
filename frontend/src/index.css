@@ -79,3 +79,13 @@ body {
   background: var(--app-bg);
   color: var(--ink);
 }
+
+/* For horizontally-scrollable rows (tag filter pills, etc.) where the
+   native scrollbar track would otherwise show as an ugly bar under them. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

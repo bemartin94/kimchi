@@ -147,6 +147,7 @@ export function RecipeDetail() {
             </button>
           )}
         </div>
+        {recipe.author && <p className="mb-1 text-sm text-muted">by {recipe.author}</p>}
         {shareFeedback && <p className="mb-2 text-xs text-success-ink">{shareFeedback}</p>}
         {tagsOf(recipe).length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">

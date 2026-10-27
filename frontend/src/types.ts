@@ -27,6 +27,8 @@ export interface Recipe {
   video_id: string | null
   title: string
   thumbnail_url: string | null
+  /** Original creator/channel, when the source exposed one. */
+  author: string | null
   ingredients: Ingredient[]
   steps: string[]
   raw_transcript: string | null
@@ -41,6 +43,7 @@ export interface SharedRecipe {
   title: string
   thumbnail_url: string | null
   source_url: string | null
+  author: string | null
   ingredients: Ingredient[]
   steps: string[]
   created_at: string
@@ -53,4 +56,5 @@ export interface ExtractedRecipe {
   ingredients: Ingredient[]
   steps: string[]
   thumbnailUrl: string | null
+  author: string | null
 }

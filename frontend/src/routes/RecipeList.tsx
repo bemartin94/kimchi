@@ -65,7 +65,7 @@ export function RecipeList() {
           </span>
         </div>
 
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="scrollbar-none mb-4 flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveTag('all')}
             className={`shrink-0 rounded-full px-3 py-1 text-sm ${

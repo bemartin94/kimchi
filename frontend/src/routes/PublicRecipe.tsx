@@ -60,6 +60,7 @@ export function PublicRecipe() {
           <img src={recipe.thumbnail_url} alt="" className="mb-4 w-full rounded-lg object-cover" />
         )}
         <h1 className="mb-1 text-xl font-semibold text-ink">{recipe.title}</h1>
+        {recipe.author && <p className="mb-1 text-sm text-muted">by {recipe.author}</p>}
         {recipe.source_url && (
           <a
             href={recipe.source_url}
