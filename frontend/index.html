@@ -7,7 +7,16 @@
          the on-screen keyboard instead of shrinking the viewport, which makes
          `position: fixed` elements (like the search bar) and `100vh`-based
          layouts miscalculate and leave a gap that needs scrolling to clear. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+    <!-- viewport-fit=cover: without this, the page isn't allowed to paint
+         into the safe areas (notch, Android gesture-nav bar) at all -- that
+         strip is reserved by the OS and falls back to its own default white
+         fill, which no amount of theme-color/CSS can reach. This lets our
+         own background extend there instead, with env(safe-area-inset-*)
+         used where content needs to avoid the actual notch/gesture pill. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#faf6f1" />
     <title>Recetario</title>
     <!-- Applies the stored dark/light preference before React mounts (and
