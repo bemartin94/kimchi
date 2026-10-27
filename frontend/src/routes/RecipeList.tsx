@@ -108,30 +108,25 @@ export function RecipeList() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="flex flex-col gap-2">
           {visible.map((r) => (
             <Link
               key={r.id}
               to={`/recipes/${r.id}`}
-              className="overflow-hidden rounded-lg border border-line bg-card"
+              className="flex items-center gap-3 overflow-hidden rounded-lg border border-line bg-card p-2"
             >
               {r.thumbnail_url ? (
-                <img src={r.thumbnail_url} alt="" className="aspect-video w-full object-cover" />
+                <img
+                  src={r.thumbnail_url}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-md object-cover"
+                />
               ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-pill text-2xl">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-pill text-2xl">
                   🍽️
                 </div>
               )}
-              <div className="p-2">
-                <p className="text-sm font-medium text-ink">{r.title}</p>
-                {tagsOf(r).length > 0 && (
-                  <p className="mt-0.5 truncate text-xs text-muted">
-                    {tagsOf(r)
-                      .map((t) => t.name)
-                      .join(' · ')}
-                  </p>
-                )}
-              </div>
+              <p className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{r.title}</p>
             </Link>
           ))}
         </div>
